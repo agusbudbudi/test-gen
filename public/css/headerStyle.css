@@ -1,23 +1,17 @@
 /* Sticky Header di dalam main-content  */
 .sticky-header {
-  display: none;
-  background-color: var(--bg-color);
-  position: sticky;
+  background-color: var(--sidebar-bg);
+  position: fixed;
   top: 0;
-  padding: 5px 10px 5px 10px;
-  text-align: center;
+  padding: 10px 20px;
   font-size: 12px;
   font-weight: bold;
   z-index: 1000;
-  text-align: center;
-  width: 90%;
-
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;
   transition: all 0.3s ease;
-  margin: 20px;
-  border-radius: 20px;
   text-align: left;
-  transition: opacity 0.3s ease;
+  border-bottom: 1px solid var(--table-border-color);
 }

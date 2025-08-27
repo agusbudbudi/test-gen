@@ -24,7 +24,7 @@ async function generateBugReport() {
   ${bugDetails}`;
 
   if (!bugDetails.trim()) {
-    alert("masukkan bug detail terlebih dahulu!");
+    showToast("Please enter bug details!", "warning");
     return;
   }
 
@@ -129,6 +129,8 @@ function parseBugReportTable(gptResponse) {
     }
   });
 
+  showToast("Bug report generated successfully!", "success");
+
   return table;
 }
 
@@ -186,7 +188,7 @@ function copyBugReport() {
   const rows = bugReportTable.querySelectorAll("tbody tr");
 
   if (rows.length === 0) {
-    alert("No bug report to copy!");
+    showToast("No bug report to copy!", "warning");
     return;
   }
 
@@ -228,6 +230,6 @@ function copyBugReport() {
   // Salin ke clipboard
   navigator.clipboard
     .writeText(copiedText)
-    .then(() => alert("✅ Bug report copied!"))
-    .catch(() => alert("❌ Failed to copy bug report."));
+    .then(() => showToast("Bug report copied!", "success"))
+    .catch(() => showToast("Failed to copy bug report.", "error"));
 }

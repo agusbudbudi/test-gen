@@ -3,7 +3,7 @@ async function reviewTestCase() {
   const result = document.getElementById("reviewResult");
 
   if (!input) {
-    result.innerHTML = `<p class="text-red-500">Please input a test case to review.</p>`;
+    showToast("Please input a test case to review.", "warning");
     return;
   }
 

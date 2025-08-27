@@ -10,7 +10,7 @@ async function generateTestCase() {
 
   // ✅ Fix: Ensure prompt is not empty (checks the combined input now)
   if (!combinedPrompt.trim()) {
-    alert("Masukkan User Story dan Prompt terlebih dahulu!");
+    showToast("Please enter User Story and Prompt!", "warning");
     return;
   }
 
@@ -22,7 +22,8 @@ async function generateTestCase() {
   const apiKey = localStorage.getItem("OPENAI_API_KEY");
   if (!apiKey) {
     loading.classList.add("hidden");
-    alert("API Key is missing! Please set it in the sidebar.");
+
+    showToast("API Key is missing! Please set it in the sidebar.", "warning");
     return;
   }
 
@@ -66,7 +67,7 @@ async function generateTestCase() {
 
       loading.classList.add("hidden");
     } else {
-      alert("Tidak ada test case yang dihasilkan.");
+      showToast("Tidak ada test case yang dihasilkan.", "warning");
       loading.classList.add("hidden");
     }
   } catch (error) {
@@ -106,13 +107,13 @@ function generateTestCaseAndStoreHistory() {
 
   // 🚨 Validation: Check if the User Story is empty
   if (userStory.trim() === "") {
-    alert("Please enter a User Story!"); // 🔴 Show alert if missing
+    showToast("Please enter a User Story!", "warning");
     return; // ⛔ Stop function execution
   }
 
   // 🚨 Validation: Check if the Prompt is empty
   if (prompt.trim() === "") {
-    alert("Please enter a Prompt!"); // 🔴 Show alert if missing
+    showToast("Please enter a Prompt!", "warning");
     return; // ⛔ Stop function execution
   }
 
@@ -166,7 +167,7 @@ function updateHistory() {
 function addResultToHistory() {
   let resultTable = document.getElementById("resultTable");
   if (resultTable.classList.contains("hidden")) {
-    alert("No test case result available to save!");
+    showToast("No test case result available to save!", "warning");
     return;
   }
 
@@ -182,7 +183,7 @@ function addResultToHistory() {
   });
 
   if (tableData.length === 0) {
-    alert("No test case data found!");
+    showToast("No test case data found!", "warning");
     return;
   }
 
@@ -204,7 +205,8 @@ function addResultToHistory() {
 
   localStorage.setItem("historyEntries", JSON.stringify(historyEntries));
   updateHistory();
-  alert("Test case result has been added to history.");
+
+  showToast("Test case result has been added to history.", "success");
 }
 
 // delete history
@@ -212,6 +214,8 @@ function deleteHistory(index) {
   historyEntries.splice(index, 1);
   localStorage.setItem("historyEntries", JSON.stringify(historyEntries));
   updateHistory();
+
+  showToast("History deleted successfully!", "success");
 }
 
 //Load Data on Page Load
