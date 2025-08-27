@@ -40,6 +40,8 @@ function parseGPTTable(gptResponse) {
     ]);
   });
 
+  showToast("Success generate Test Case!", "success");
+
   return table;
 }
 
@@ -61,7 +63,8 @@ function formatMultiLine(text) {
 function exportToExcel() {
   const table = document.getElementById("resultTable");
   if (table.classList.contains("hidden")) {
-    alert("No data to export!");
+    showToast("No data to export!", "warning");
+
     return;
   }
 
@@ -70,4 +73,6 @@ function exportToExcel() {
 
   XLSX.utils.book_append_sheet(wb, ws, "TestCases");
   XLSX.writeFile(wb, "Test_Cases.xlsx");
+
+  showToast("Success Downloading to Excel!", "success");
 }

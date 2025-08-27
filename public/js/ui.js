@@ -1,11 +1,77 @@
-// function setupUI() {
-//   document.getElementById("sidebar").innerHTML = `
-//         <ul>
-//             <li><a href="#" onclick="showSection('testCaseSection')">Generate Test Case</a></li>
-//             <li><a href="#" onclick="showSection('historySection')">History</a></li>
-//         </ul>
-//     `;
-// }
+// Toast Notification System
+//==========================================
+function showToast(message, type = "info", duration = 3000) {
+  // Create toast container if it doesn't exist
+  let toastContainer = document.getElementById("toastContainer");
+  if (!toastContainer) {
+    toastContainer = document.createElement("div");
+    toastContainer.id = "toastContainer";
+    toastContainer.className = "toast-container";
+    document.body.appendChild(toastContainer);
+  }
+
+  // Create toast element
+  const toast = document.createElement("div");
+  toast.className = `toast toast-${type}`;
+
+  // Add icon based on type
+  let icon = "";
+  switch (type) {
+    case "success":
+      icon = '<i class="uil uil-check-circle"></i>';
+      break;
+    case "error":
+      icon = '<i class="uil uil-times-circle"></i>';
+      break;
+    case "warning":
+      icon = '<i class="uil uil-exclamation-triangle"></i>';
+      break;
+    case "info":
+    default:
+      icon = '<i class="uil uil-info-circle"></i>';
+      break;
+  }
+
+  toast.innerHTML = `
+    <div class="toast-content">
+      <div class="toast-icon">${icon}</div>
+      <div class="toast-message">${message}</div>
+      <button class="toast-close" onclick="closeToast(this)">
+        <i class="uil uil-times"></i>
+      </button>
+    </div>
+  `;
+
+  // Add toast to container
+  toastContainer.appendChild(toast);
+
+  // Show toast with animation
+  setTimeout(() => {
+    toast.classList.add("show");
+  }, 100);
+
+  // Auto remove toast after duration
+  setTimeout(() => {
+    closeToast(toast.querySelector(".toast-close"));
+  }, duration);
+
+  return toast;
+}
+
+function closeToast(closeButton) {
+  const toast = closeButton.closest(".toast");
+  if (toast) {
+    toast.classList.remove("show");
+    toast.classList.add("hide");
+
+    // Remove from DOM after animation
+    setTimeout(() => {
+      if (toast.parentNode) {
+        toast.parentNode.removeChild(toast);
+      }
+    }, 300);
+  }
+}
 
 // Function to switch sections
 function showSection(sectionId) {
@@ -41,7 +107,7 @@ function showLoading(state) {
 
 //toggle theme
 //==========================================
-document.getElementById("toggleTheme").addEventListener("click", function () {
+function toggleTheme() {
   const body = document.body;
   const themeIcon = document.getElementById("themeIcon");
 
@@ -58,28 +124,30 @@ document.getElementById("toggleTheme").addEventListener("click", function () {
     themeIcon.innerText = isDarkMode ? "☀️" : "🌙"; // Ganti ikon
     themeIcon.style.opacity = "1"; // Tampilkan kembali dengan efek
   }, 300);
-});
-
-// Saat halaman dimuat, set ikon sesuai tema tersimpan
-document.addEventListener("DOMContentLoaded", () => {
-  const isDarkMode = localStorage.getItem("theme") === "dark";
-  if (isDarkMode) {
-    document.body.classList.add("dark-mode");
-    document.getElementById("themeIcon").innerText = "☀️";
-  }
-});
+}
 
 // Toggle Sidebar
 //==========================================
 function toggleSidebar() {
   const sidebar = document.querySelector(".sidebar");
   const content = document.querySelector(".content");
+  const toggleButton = document.getElementById("toggleSidebar");
+  const toggleIcon = toggleButton.querySelector("i");
 
   // Toggle collapsed class
   sidebar.classList.toggle("collapsed");
 
+  // Change icon based on sidebar state
+  if (sidebar.classList.contains("collapsed")) {
+    // Sidebar is collapsed (closed) - show right arrow to indicate it can be opened
+    toggleIcon.className = "uil uil-angle-right-b";
+  } else {
+    // Sidebar is expanded (open) - show left arrow to indicate it can be closed
+    toggleIcon.className = "uil uil-angle-left-b";
+  }
+
   // Adjust content width
-  content.style.width = sidebar.classList.contains("collapsed") ? "90%" : "82%";
+  content.style.width = sidebar.classList.contains("collapsed") ? "93%" : "85%";
 
   // Save state in localStorage
   localStorage.setItem(
@@ -92,34 +160,31 @@ function toggleSidebar() {
 function loadSidebarState() {
   const sidebar = document.querySelector(".sidebar");
   const content = document.querySelector(".content");
+  const toggleButton = document.getElementById("toggleSidebar");
+  const toggleIcon = toggleButton?.querySelector("i");
 
   if (localStorage.getItem("sidebarCollapsed") === "true") {
     sidebar.classList.add("collapsed");
-    content.style.width = "90%";
+    content.style.width = "93%";
+    // Set icon to right arrow when sidebar is collapsed
+    if (toggleIcon) {
+      toggleIcon.className = "uil uil-angle-right-b";
+    }
   } else {
-    content.style.width = "82%"; //default width content main
+    content.style.width = "85%"; //default width content main
+    // Set icon to left arrow when sidebar is expanded
+    if (toggleIcon) {
+      toggleIcon.className = "uil uil-angle-left-b";
+    }
   }
 }
-
-// Initialize UI functions
-document.addEventListener("DOMContentLoaded", () => {
-  loadSidebarState();
-
-  // Attach event listener to toggle button
-  const toggleButton = document.getElementById("toggleSidebar");
-  if (toggleButton) {
-    toggleButton.addEventListener("click", toggleSidebar);
-  } else {
-    console.error("Sidebar toggle button not found!");
-  }
-});
 
 function copyTestCase() {
   const resultTable = document.getElementById("resultTable");
   const rows = resultTable.querySelectorAll("tbody tr");
 
   if (rows.length === 0) {
-    alert("No test cases to copy!");
+    showToast("No test cases to copy!", "warning");
     return;
   }
 
@@ -155,16 +220,24 @@ function copyTestCase() {
 
   navigator.clipboard
     .writeText(copiedText)
-    .then(() => alert("✅ Test cases copied with proper multiline and quotes!"))
-    .catch(() => alert("❌ Failed to copy test cases."));
+    .then(() => showToast("Test cases copied successfully!", "success"))
+    .catch(() => showToast("Failed to copy test cases", "error"));
 }
 
-// Attach event listener to button
-document
-  .getElementById("copyTestCaseButton")
-  .addEventListener("click", copyTestCase);
-
 function showApiKeyModal() {
+  const apiKeyInput = document.getElementById("apiKeyInput");
+  const savedKey = localStorage.getItem("OPENAI_API_KEY");
+
+  if (savedKey) {
+    apiKeyInput.placeholder = "API Key sudah tersimpan";
+    apiKeyInput.value = "";
+    apiKeyInput.disabled = true;
+  } else {
+    apiKeyInput.placeholder = "Enter OpenAI API Key";
+    apiKeyInput.value = "";
+    apiKeyInput.disabled = false;
+  }
+
   document.getElementById("apiKeyModal").classList.remove("hidden");
   document.getElementById("modalOverlay").classList.remove("hidden");
 }
@@ -176,16 +249,17 @@ function closeApiKeyModal() {
 
 // Save API Key to localStorage
 function setApiKey() {
-  const apiKey = document.getElementById("apiKeyInput").value.trim();
+  const apiKeyInput = document.getElementById("apiKeyInput");
+  const apiKey = apiKeyInput.value.trim();
   if (apiKey) {
     localStorage.setItem("OPENAI_API_KEY", apiKey);
-    alert("API Key saved successfully!");
+    showToast("API Key saved successfully!", "success");
     closeApiKeyModal();
     apiKeyInput.placeholder = "API key sudah tersimpan";
     apiKeyInput.value = ""; // Pastikan tidak auto-isi demi keamanan
     apiKeyInput.disabled = true;
   } else {
-    alert("Please enter a valid API Key.");
+    showToast("Please enter a valid API Key", "warning");
   }
 }
 
@@ -198,9 +272,10 @@ function setApiKey() {
 // });
 
 function clearApiKey() {
+  const apiKeyInput = document.getElementById("apiKeyInput");
   localStorage.removeItem("OPENAI_API_KEY"); // Remove from storage
-  document.getElementById("apiKeyInput").value = ""; // Clear input field
-  alert("API Key has been cleared.");
+  apiKeyInput.value = ""; // Clear input field
+  showToast("API Key has been cleared", "info");
   closeApiKeyModal(); // Auto-close the modal after clicking "OK"
   apiKeyInput.placeholder = "Enter OpenAI API Key";
   apiKeyInput.value = ""; // Pastikan tidak auto-isi demi keamanan
@@ -218,7 +293,38 @@ function deleteHistory(index, type) {
   updateHistory();
 }
 
+// Initialize all UI components when DOM is loaded
 document.addEventListener("DOMContentLoaded", () => {
+  // Load sidebar state
+  loadSidebarState();
+
+  // Set theme based on saved preference
+  const isDarkMode = localStorage.getItem("theme") === "dark";
+  if (isDarkMode) {
+    document.body.classList.add("dark-mode");
+    const themeIcon = document.getElementById("themeIcon");
+    if (themeIcon) {
+      themeIcon.innerText = "☀️";
+    }
+  }
+
+  // Attach event listeners
+  const toggleButton = document.getElementById("toggleSidebar");
+  if (toggleButton) {
+    toggleButton.addEventListener("click", toggleSidebar);
+  }
+
+  const themeToggle = document.getElementById("toggleTheme");
+  if (themeToggle) {
+    themeToggle.addEventListener("click", toggleTheme);
+  }
+
+  const copyButton = document.getElementById("copyTestCaseButton");
+  if (copyButton) {
+    copyButton.addEventListener("click", copyTestCase);
+  }
+
+  // Load history data
   let savedPrompts = localStorage.getItem("promptHistory");
   let savedResults = localStorage.getItem("resultHistory");
 
@@ -246,14 +352,13 @@ function closeHowToUseModal() {
 
 // paste template
 function applyTemplate() {
-  const templateUserStory = `User Story: `;
-  const templatePrompt = `Preconditions: 
-AcceptanceCriteria: 
+  const templateUserStory = `**User Story**: As a user a want to ...`;
+  const templatePrompt = `**Preconditions**: 
+**AcceptanceCriteria**: 
 
+**Constraints**: 
 
-Constraints: 
-
-Formatting table
+**Formatting table**
 - create in table format only show content without header column section
 - use <br> line breaks in the generated test case text
 - Use Gherkin syntax (Given, When, Then) for test case preconditions, steps, and expected results.

@@ -18,6 +18,7 @@
     <link rel="stylesheet" href="public/css/sidebarStyle.css" />
     <link rel="stylesheet" href="public/css/textareaStyle.css" />
     <link rel="stylesheet" href="public/css/historyStyle.css" />
+    <link rel="stylesheet" href="public/css/toastStyle.css" />
     <link rel="stylesheet" href="public/css/reviewTestCase.css" />
     <!-- Light/Dark mode styles -->
     <link
@@ -49,7 +50,9 @@
     <!-- API Key Modal -->
     <div id="apiKeyModal" class="modal hidden">
       <div class="modal-content">
-        <span class="close-modal" onclick="closeApiKeyModal()">&times;</span>
+        <span class="close-modal" onclick="closeApiKeyModal()"
+          ><i class="uil uil-times"></i
+        ></span>
         <h3>Set OpenAI API Key</h3>
         <input
           type="text"
@@ -64,7 +67,9 @@
     <!-- How to Use -->
     <div id="howToUseModal" class="modal hidden">
       <div class="modal-content">
-        <span class="close-modal" onclick="closeHowToUseModal()">&times;</span>
+        <span class="close-modal" onclick="closeHowToUseModal()"
+          ><i class="uil uil-times"></i
+        ></span>
         <h3>How To Use</h3>
         <p>
           <li>
@@ -98,43 +103,32 @@
         </div>
         <ul class="sidebar-menu">
           <li class="active">
-            <a href="#" onclick="showSection('generate')">
-              <!-- <i class="fa-solid fa-wand-magic-sparkles"></i> -->
-              <i class="uil uil-file-check-alt"></i>
+            <a href="#" class="nav-link" onclick="showSection('generate')">
+              <i class="uil uil-file-check"></i>
               <span> Generate Test Case</span>
             </a>
           </li>
-          <!-- New menu Review Test Case -->
           <li class="review-menu-btn">
-            <a href="#" onclick="showSection('review')">
-              <!-- <i class="fa-solid fa-robot"></i> -->
-              <!-- <i class="fa-solid fa-robot"></i> -->
+            <a href="#" class="nav-link" onclick="showSection('review')">
               <i class="uil uil-robot"></i>
-              <span class="mdi mdi-robot-happy-outline"></span>
-
               <span> Review Test Case</span>
             </a>
           </li>
-          <!-- New menu AI Bug Assited -->
           <li class="review-menu-btn">
-            <a href="#" onclick="showSection('bugReport')">
-              <!-- <i class="fa-solid fa-bug"></i> -->
+            <a href="#" class="nav-link" onclick="showSection('bugReport')">
               <i class="uil uil-bug"></i>
               <span> Bug Report</span>
             </a>
           </li>
           <li class="history-menu-btn">
-            <a href="#" onclick="showSection('history')">
-              <!-- <i class="fas fa-history"></i> -->
+            <a href="#" class="nav-link" onclick="showSection('history')">
               <i class="uil uil-history"></i>
               <span> History</span>
             </a>
           </li>
-          <!-- setup api keys -->
           <li>
-            <a href="#" onclick="showApiKeyModal()">
-              <!-- <i class="fas fa-code"></i> -->
-              <i class="uil uil-arrow"></i>
+            <a href="#" class="nav-link" onclick="showApiKeyModal()">
+              <i class="uil uil-key-skeleton-alt"></i>
               <span>API Key</span>
             </a>
           </li>
@@ -146,7 +140,7 @@
         </button>
         <!-- Toogle sidebar -->
         <button id="toggleSidebar" class="third-button">
-          <i class="uil uil-bars"></i>
+          <i class="uil uil-angle-right-b"></i>
         </button>
 
         <!-- Powered by OpenAI -->
@@ -167,7 +161,6 @@
 
       <!-- Main Content -->
       <div class="content" id="mainContent">
-        <!-- Gambar Default -->
         <!-- Generate Test Case Section -->
         <div id="generate" class="section" class="center-container">
           <!-- Sticky Header -->
@@ -208,12 +201,17 @@
               </div>
             </div>
 
-            <textarea id="userStory" placeholder="Enter User Story"></textarea>
+            <div class="textarea-container">
+              <textarea
+                id="userStory"
+                placeholder="Enter User Story"
+              ></textarea>
 
-            <textarea
-              id="prompt"
-              placeholder="Enter detailed prompt contain Preconditions, Acceptance Criteria, Constraints, and Test Case Structure"
-            ></textarea>
+              <textarea
+                id="prompt"
+                placeholder="Enter detailed prompt contain Preconditions, Acceptance Criteria, Constraints, and Test Case Structure"
+              ></textarea>
+            </div>
 
             <!-- Button to generate test cases -->
             <div class="button-container">
@@ -223,7 +221,6 @@
                   class="secondary-button"
                   onclick="addResultToHistory()"
                 >
-                  <!-- <i class="fa-solid fa-clock-rotate-left"></i> -->
                   <i class="uil uil-history"></i>
                   Add to History
                 </button>
@@ -233,13 +230,12 @@
                   Export to Excel
                 </button>
                 <button class="secondary-button" id="copyTestCaseButton">
-                  <!-- <i class="fa-regular fa-copy"></i> -->
                   <i class="uil uil-copy"></i>
                   Copy Test Case
                 </button>
               </div>
               <button
-                class="primary-button"
+                class="ai-btn"
                 id="generateButton"
                 onclick="generateTestCaseAndStoreHistory()"
               >
@@ -283,33 +279,18 @@
             <h2>🤖 AI Test Case Review</h2>
           </div>
           <div class="input-container">
-            <div class="button-container">
-              <div class="left-buttons">
-                <!-- Prefix Prompt -->
-                <div class="badge hidden" onclick="applyTemplate()">
-                  <div class="icon-container">
-                    <i class="fa-regular fa-paste badge-icon"></i>
-                  </div>
-                  <div class="text-content">
-                    <p class="title">Prefix Prompt</p>
-                    <p class="description">
-                      Edit prefix untuk menyesuaikan prompt review test cases
-                    </p>
-                  </div>
-                </div>
-              </div>
+            <div class="textarea-container">
+              <textarea
+                id="testCaseInput"
+                placeholder="Enter genereated test case to be reviewed"
+              ></textarea>
             </div>
-
-            <textarea
-              id="testCaseInput"
-              placeholder="Enter genereated test case to be reviewed"
-            ></textarea>
 
             <!-- Button to generate test cases -->
             <div class="button-container">
               <div class="left-buttons"></div>
               <button
-                class="primary-button"
+                class="ai-btn"
                 id="reviewButton"
                 onclick="reviewTestCase()"
               >
@@ -317,7 +298,6 @@
                 Review Test Case
               </button>
             </div>
-            <!-- <div id="reviewResult" class="mt-4 space-y-2"></div> -->
             <div
               id="reviewResult"
               class="opacity-0 transition-opacity duration-700"
@@ -337,13 +317,12 @@
             <h2>🪲 Bug Report Generator</h2>
           </div>
           <div class="input-container">
-            <!-- <label for="bugReportInput" class="labelInput"
-              >Explain the bug:</label
-            > -->
-            <textarea
-              id="bugReportInput"
-              placeholder="explain your finded bug"
-            ></textarea>
+            <div class="textarea-container">
+              <textarea
+                id="bugReportInput"
+                placeholder="explain your finded bug"
+              ></textarea>
+            </div>
 
             <!-- Button to generate Bug Report -->
             <div class="button-container">
@@ -359,11 +338,10 @@
                 </button>
               </div>
               <button
-                class="primary-button"
+                class="ai-btn"
                 id="bugReportButton"
                 onclick="generateBugReport()"
               >
-                <!-- <i class="fa-solid fa-bug"></i> -->
                 <i class="uil uil-bug"></i>
                 Generate Bug Report
               </button>
