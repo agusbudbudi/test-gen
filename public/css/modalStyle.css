@@ -35,6 +35,45 @@
   margin: 0;
 }
 
+#promptInstructionsModal {
+  max-width: 720px;
+  width: 90%;
+}
+
+#promptInstructionsModal .modal-content {
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+}
+
+#promptInstructionsInput {
+  width: 100%;
+  min-height: 280px;
+  margin: 16px 0;
+  border-radius: 12px;
+  padding: 12px;
+  border: 1px solid var(--table-border-color);
+  background-color: var(--input-bg);
+  color: var(--text-color);
+  resize: vertical;
+  flex: 1;
+}
+
+.button-popup-container {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+  gap: 6px;
+}
+
+#howToUseModal .howto-list {
+  padding-left: 28px;
+  margin: 18px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
 /* Modal Close Button */
 .close-modal {
   position: absolute;
@@ -73,4 +112,8 @@
 li {
   font-size: 12px;
   text-align: left;
+}
+
+#howToUseModal {
+  padding-bottom: 30px;
 }

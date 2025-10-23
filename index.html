@@ -64,6 +64,28 @@
       </div>
     </div>
 
+    <!-- Prompt Instructions Modal -->
+    <div id="promptInstructionsModal" class="modal hidden">
+      <div class="modal-content">
+        <span class="close-modal" onclick="closePromptInstructionsModal()"
+          ><i class="uil uil-times"></i
+        ></span>
+        <h3>Prompt Instructions</h3>
+        <textarea
+          id="promptInstructionsInput"
+          placeholder="Enter reusable prompt instructions"
+        ></textarea>
+        <div class="button-popup-container">
+          <button class="secondary-button" onclick="cancelPromptInstructions()">
+            Cancel
+          </button>
+          <button class="primary-button" onclick="savePromptInstructions()">
+            Save
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- How to Use -->
     <div id="howToUseModal" class="modal hidden">
       <div class="modal-content">
@@ -71,11 +93,19 @@
           ><i class="uil uil-times"></i
         ></span>
         <h3>How To Use</h3>
-        <p>
+        <ul class="howto-list">
+          <li>
+            <b>Prompt Instructions</b>: QA should input a prompt instructions
+            that will be used when generating test cases.
+          </li>
+          <li>
+            <b>Use Template</b>: QA should click "Use Template" card to prefill
+            field User Story and Prompt.
+          </li>
           <li>
             <b>Enter Prompt</b>: QA should input a User Story and detailed
-            prompt same as provided template, including Preconditions,
-            Acceptance Criteria, Constraints, and Test Case Structure.
+            prompt same as provided template, including Preconditions and
+            Acceptance Criteria
           </li>
           <li>
             <b>Generate:</b> click Generate button after entering the prompt to
@@ -90,7 +120,7 @@
           </li>
           <li><b>Export to Excel:</b> Export generated test cases to Excel.</li>
           <li><b>Copy Test Case:</b> Copy generated test cases.</li>
-        </p>
+        </ul>
       </div>
     </div>
 
@@ -185,6 +215,19 @@
                   </div>
                 </div>
 
+                <div class="badge" onclick="showPromptInstructionsModal()">
+                  <div class="icon-container">
+                    <i class="uil uil-comment-alt-edit badge-icon"></i>
+                  </div>
+                  <div class="text-content">
+                    <p class="title">Prompt Instructions</p>
+                    <p class="description">
+                      Simpan instruksi prompt reusable untuk digabung saat
+                      generate.
+                    </p>
+                  </div>
+                </div>
+
                 <div class="badge" onclick="showHowToUseModal()">
                   <div class="icon-container">
                     <i class="fa-regular fa-lightbulb badge-icon"></i>
@@ -209,7 +252,7 @@
 
               <textarea
                 id="prompt"
-                placeholder="Enter detailed prompt contain Preconditions, Acceptance Criteria, Constraints, and Test Case Structure"
+                placeholder="Enter detailed prompt contain Preconditions, and Acceptance Criteria"
               ></textarea>
             </div>
 

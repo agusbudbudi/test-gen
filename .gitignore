@@ -1,2 +1,6 @@
 node_modules/
 backup.js
+.env
+server/
+package.json
+package-lock.json

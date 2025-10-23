@@ -1,16 +1,26 @@
 async function generateTestCase() {
   const userStory = document.getElementById("userStory").value;
-  const prompt = document.getElementById("prompt").value;
+  const promptDetails = document.getElementById("prompt").value;
+  const promptInstructions = localStorage.getItem("promptInstructions") || "";
   const loading = document.getElementById("loadingAnimation");
   const resultTable = document.getElementById("resultTable");
   const tbody = resultTable.querySelector("tbody");
 
   // ✅ New: Combine `userStory` and `promptDescription` into a single prompt
-  const combinedPrompt = `User Story: ${userStory}\n\nPrompt: ${prompt}`;
+  const combinedPrompt = [
+    `User Story: ${userStory}`,
+    `Prompt Details:\n${promptDetails}`,
+    promptInstructions ? `Prompt Instructions:\n${promptInstructions}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n\n");
 
   // ✅ Fix: Ensure prompt is not empty (checks the combined input now)
   if (!combinedPrompt.trim()) {
-    showToast("Please enter User Story and Prompt!", "warning");
+    showToast(
+      "Please enter User Story and Preconditions/Acceptance Criteria!",
+      "warning"
+    );
     return;
   }
 
@@ -29,12 +39,14 @@ async function generateTestCase() {
 
   const apiUrl = "https://api.openai.com/v1/chat/completions";
 
+  // const apiUrl = "/api/chat"; //new endpoint for implement backend unused for now
+
   try {
     const response = await fetch(apiUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: `Bearer ${apiKey}`, // ✅ Use stored API key for now
       },
       body: JSON.stringify({
         model: "gpt-4o-mini",
@@ -100,10 +112,26 @@ function formatTableData(tableData) {
 // Load stored history from localStorage or initialize an empty array
 let historyEntries = JSON.parse(localStorage.getItem("historyEntries")) || [];
 
+function scrollHistoryToBottom() {
+  const historyList = document.getElementById("historyList");
+  if (!historyList) {
+    return;
+  }
+
+  requestAnimationFrame(() => {
+    const lastBubble = historyList.lastElementChild;
+    if (lastBubble && typeof lastBubble.scrollIntoView === "function") {
+      lastBubble.scrollIntoView({ behavior: "auto", block: "end" });
+    }
+    historyList.scrollTop = historyList.scrollHeight;
+  });
+}
+
 // Function to generate test case and store the prompt
 function generateTestCaseAndStoreHistory() {
   let userStory = document.getElementById("userStory").value; // ✅ Get User Story value
-  let prompt = document.getElementById("prompt").value; // ✅ Trim prompt value
+  let promptDetails = document.getElementById("prompt").value; // ✅ Trim prompt value
+  const promptInstructions = localStorage.getItem("promptInstructions") || "";
 
   // 🚨 Validation: Check if the User Story is empty
   if (userStory.trim() === "") {
@@ -112,15 +140,24 @@ function generateTestCaseAndStoreHistory() {
   }
 
   // 🚨 Validation: Check if the Prompt is empty
-  if (prompt.trim() === "") {
-    showToast("Please enter a Prompt!", "warning");
+  if (promptDetails.trim() === "") {
+    showToast("Please enter Preconditions and Acceptance Criteria!", "warning");
     return; // ⛔ Stop function execution
   }
 
   // Save prompt as a history entry
+  const historyContent = [
+    `User Story: ${userStory}`,
+    `Prompt Details:\n${promptDetails}`,
+    promptInstructions ? `Prompt Instructions: ${promptInstructions}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+
   historyEntries.push({
     type: "prompt",
-    content: `User Story: ${userStory}\nPrompt: ${prompt}`,
+    content: historyContent,
+    createdAt: new Date().toISOString(),
   });
 
   //localStorage.setItem("historyEntries", JSON.stringify(historyEntries));
@@ -132,10 +169,17 @@ function generateTestCaseAndStoreHistory() {
 
 function updateHistory() {
   let historyList = document.getElementById("historyList");
+  if (!historyList) {
+    return;
+  }
   historyList.innerHTML = ""; // Clear previous history
 
   historyEntries.forEach((entry, index) => {
     let content = entry.content;
+    if (!entry.createdAt) {
+      entry.createdAt = new Date().toISOString();
+    }
+    const formattedTimestamp = new Date(entry.createdAt).toLocaleString();
 
     // Ensure content is a string
     if (typeof content !== "string") {
@@ -146,22 +190,37 @@ function updateHistory() {
 
     let chatBubble = document.createElement("div");
     chatBubble.classList.add("chat-bubble");
+    let row = document.createElement("div");
+    row.classList.add("message-row");
 
     if (entry.type === "prompt") {
       chatBubble.classList.add("even-bubble");
-      chatBubble.innerHTML = `<div><strong>Prompt:</strong><br> ${content}</div>
-       <div class="button-section"><button class="delete-btn" onclick="deleteHistory(${index})"><i class="uil uil-trash"></i> Delete</button></div>`;
+      const safeContent = String(content)
+        .replace(/&/g, "&")
+        .replace(/</g, "<")
+        .replace(/>/g, ">")
+        .replace(/\n/g, "<br>");
+      chatBubble.innerHTML = `<div class="chat"><strong>Prompt:</strong><br>${safeContent}</div>
+        <div class="button-section"><span class="history-date">${formattedTimestamp}</span><button class="delete-btn" onclick="deleteHistory(${index})"><i class="uil uil-trash"></i> Delete</button></div>`;
+      row.classList.add("right");
+      row.appendChild(chatBubble);
     } else if (entry.type === "result") {
       chatBubble.classList.add("odd-bubble");
       chatBubble.innerHTML = `<div class="chat"><strong>Test Case Result:</strong><br>
         <pre>${formatTableData(content)}</pre></div>
-        <div class="button-section"><button class="delete-btn" onclick="deleteHistory(${index})"><i class="uil uil-trash"></i> Delete</button></div>`;
+        <div class="button-section"><span class="history-date">${formattedTimestamp}</span><button class="delete-btn" onclick="deleteHistory(${index})"><i class="uil uil-trash"></i> Delete</button></div>`;
+      row.classList.add("left");
+      const avatar = document.createElement("div");
+      avatar.classList.add("avatar");
+      row.appendChild(avatar);
+      row.appendChild(chatBubble);
     }
 
-    historyList.appendChild(chatBubble);
+    historyList.appendChild(row);
   });
 
   localStorage.setItem("historyEntries", JSON.stringify(historyEntries));
+  scrollHistoryToBottom();
 }
 
 function addResultToHistory() {
@@ -198,9 +257,14 @@ function addResultToHistory() {
     historyEntries.splice(lastEntryIndex + 1, 0, {
       type: "result",
       content: tableData,
+      createdAt: new Date().toISOString(),
     });
   } else {
-    historyEntries.push({ type: "result", content: tableData });
+    historyEntries.push({
+      type: "result",
+      content: tableData,
+      createdAt: new Date().toISOString(),
+    });
   }
 
   localStorage.setItem("historyEntries", JSON.stringify(historyEntries));
@@ -227,4 +291,5 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   updateHistory();
+  scrollHistoryToBottom();
 });

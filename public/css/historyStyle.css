@@ -9,7 +9,7 @@
   display: flex;
   flex-direction: column;
   width: 80%;
-  gap: 10px;
+  gap: 24px;
   justify-content: center;
   margin-top: 20px;
   margin-bottom: 20px;
@@ -23,10 +23,6 @@ pre {
   margin: 0;
 }
 
-.button-section {
-  margin: 10px 0 0 0;
-}
-
 .chat-bubble {
   position: relative;
   background-color: #2a2a2a;
@@ -37,11 +33,12 @@ pre {
   word-wrap: break-word;
   overflow-x: auto;
   text-align: left;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
 
 .odd-bubble {
   align-self: flex-start;
-  background-color: var(--chat-response-bg);
+  background-color: var(--sidebar-bg);
   border-radius: 20px 20px 20px 5px;
   color: var(--text-color);
 }
@@ -57,6 +54,46 @@ pre {
   cursor: pointer;
   padding: 0;
   margin: 0;
-  margin-top: 5px;
   font-size: 12px;
+}
+
+.button-section {
+  margin: 20px 0 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.history-date {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+/* Message row with avatar for chat layout */
+.message-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  width: 100%;
+}
+
+.message-row.left {
+  justify-content: flex-start;
+}
+
+.message-row.right {
+  justify-content: flex-end;
+}
+
+.avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background-image: url("../assets/icons/logoTestgen.png");
+  background-size: cover;
+  background-position: center;
+  flex: 0 0 48px;
+  border: 1px solid var(--chat-prompt-bg);
+  background-color: var(--sidebar-bg);
 }

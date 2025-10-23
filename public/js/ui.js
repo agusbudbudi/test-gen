@@ -92,6 +92,18 @@ function showSection(sectionId) {
   document
     .querySelector(`.sidebar ul li a[onclick="showSection('${sectionId}')"]`)
     .parentElement.classList.add("active");
+
+  if (sectionId === "history") {
+    requestAnimationFrame(() => {
+      const historyList = document.getElementById("historyList");
+      if (historyList && historyList.lastElementChild) {
+        const lastBubble = historyList.lastElementChild;
+        lastBubble.scrollIntoView({ behavior: "auto", block: "end" });
+      } else if (historyList) {
+        historyList.scrollTop = historyList.scrollHeight;
+      }
+    });
+  }
 }
 
 // loading state
@@ -350,28 +362,147 @@ function closeHowToUseModal() {
   document.getElementById("modalOverlay").classList.add("hidden");
 }
 
+function showPromptInstructionsModal() {
+  const modal = document.getElementById("promptInstructionsModal");
+  const overlay = document.getElementById("modalOverlay");
+  const input = document.getElementById("promptInstructionsInput");
+  const savedInstructions = localStorage.getItem("promptInstructions") || "";
+
+  if (input) {
+    input.value = savedInstructions;
+  }
+
+  modal?.classList.remove("hidden");
+  overlay?.classList.remove("hidden");
+}
+
+function closePromptInstructionsModal() {
+  document.getElementById("promptInstructionsModal").classList.add("hidden");
+  document.getElementById("modalOverlay").classList.add("hidden");
+}
+
+function cancelPromptInstructions() {
+  const input = document.getElementById("promptInstructionsInput");
+  if (input) {
+    input.value = localStorage.getItem("promptInstructions") || "";
+  }
+  closePromptInstructionsModal();
+}
+
+function savePromptInstructions() {
+  const input = document.getElementById("promptInstructionsInput");
+  const value = input?.value.trim() || "";
+
+  if (!value) {
+    showToast("Prompt instructions cleared.", "info");
+    localStorage.removeItem("promptInstructions");
+  } else {
+    localStorage.setItem("promptInstructions", value);
+    showToast("Prompt instructions saved.", "success");
+  }
+
+  closePromptInstructionsModal();
+}
+
 // paste template
+// function applyTemplate() {
+//   const templateUserStory = `**User Story**: `;
+//   const templatePrompt = `**Preconditions**:
+// **AcceptanceCriteria**:
+
+// **Constraints**: cover positive, negative, and edge cases
+
+// **Formatting table**
+// create in table format only show content without header column section
+// use <br> line breaks in the generated test case text
+// use Gherkin syntax (Given, When, Then) for test case columns: Preconditions, Step, and Expected Result.
+
+// **Example of Precondition using Gherkin syntax:**
+// - Given user has one voucher to send
+// - And user email is valid
+
+// **Example of Step using Gherkin syntax:**
+// 1. When triggering email for single voucher
+// 2. And check recipient email
+
+// **Example of Expected Result using Gherkin syntax:**
+// - Then email is sent to recipient with one voucher as attachment
+// - And attachment is a PNG image of the voucher
+
+// Test cases should follow this structure:
+// - Column A: No (numbering)
+// - Column B: Section (feature name)
+// - Column C: Case Type (positive/negative/edge case)
+// - Column D: Title (concise comprehensive summary contains the item to be verified)
+// - Column E: Precondition (dash list)
+// - Column F: Step (numbered list)
+// - Column G: Expected Result (dash list)
+// `;
+
+//   document.getElementById("userStory").value = templateUserStory;
+//   document.getElementById("prompt").value = templatePrompt;
+// }
+
+// function applyTemplate() {
+//   const templateUserStory = `**User Story**: `;
+
+//   const templatePrompt = `You are a QA expert. Based on the provided User Story, generate a comprehensive **test case list** that covers:
+
+// - Functional behavior (core feature functionality)
+// - UI interactions (buttons, fields, input formats, visual feedback)
+// - Validation (required fields, data format, input length)
+// - Error handling (API failures, incorrect input, timeouts)
+// - Edge cases (empty states, boundary values, rare conditions)
+// - Positive, negative, and edge case scenarios
+
+// **Requirements:**
+// - Be exhaustive: explore all logical flows, error states, and alternate paths.
+// - Use proper Gherkin syntax for Preconditions, Steps, and Expected Results.
+// - Ensure each test case is clear, atomic, and testable.
+
+// **Output Formatting (in Markdown table):**
+// - Column A: No (Test case number)
+// - Column B: Section (Feature/module/component being tested)
+// - Column C: Case Type (Positive / Negative / Edge Case)
+// - Column D: Title (short but comprehensive summary of what's tested)
+// - Column E: Precondition (Gherkin-style bullet list, use <br> for line breaks)
+// - Column F: Step (Gherkin-style numbered list, use <br> for line breaks)
+// - Column G: Expected Result (Gherkin-style bullet list, use <br> for line breaks)
+
+// **Examples:**
+
+// **Precondition (Gherkin-style):**
+// - Given user is logged in<br>
+// - And user has one voucher available
+
+// **Step (Gherkin-style):**
+// 1. When user clicks "Send Voucher"<br>
+// 2. And enters recipient email
+
+// **Expected Result (Gherkin-style):**
+// - Then email is sent to recipient<br>
+// - And voucher is attached as PNG
+
+// **Constraints:**
+// - Cover **happy path**, **alternate flows**, and **error cases**
+// - Consider both **client-side** and **server-side** behaviors
+// - Focus also on **UI components**, including their state and transitions
+
+// Generate test cases only in table format, no explanation or extra text.`;
+
+//   document.getElementById("userStory").value = templateUserStory;
+//   document.getElementById("prompt").value = templatePrompt;
+// }
+
 function applyTemplate() {
-  const templateUserStory = `**User Story**: As a user a want to ...`;
-  const templatePrompt = `**Preconditions**: 
-**AcceptanceCriteria**: 
+  const templateUserStory = `**User Story**:
+[Masukkan user story di sini]`;
 
-**Constraints**: 
+  const templatePrompt = `**Preconditions**:
+- [Masukkan precondition di sini]
 
-**Formatting table**
-- create in table format only show content without header column section
-- use <br> line breaks in the generated test case text
-- Use Gherkin syntax (Given, When, Then) for test case preconditions, steps, and expected results.
-
-Test cases should follow this structure:
-- Column A: No (numbering)
-- Column B: Section (feature name)
-- Column C: Case Type (positive/negative/edge case)
-- Column D: Title (concise comprehensive summary contains the item to be verified)  
-- Column E: Precondition (dash list)  
-- Column F: Step (numbered list)
-- Column G: Expected Result (dash list)
-`;
+**Acceptance Criteria**:
+- [Masukkan acceptance criteria di sini]`;
 
   document.getElementById("userStory").value = templateUserStory;
   document.getElementById("prompt").value = templatePrompt;

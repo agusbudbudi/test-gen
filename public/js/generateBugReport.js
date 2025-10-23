@@ -4,24 +4,29 @@ async function generateBugReport() {
   const bugTable = document.getElementById("bugReportTable");
   const tbody = bugTable.querySelector("tbody");
 
-  const combinedPrompt = `You are a QA specialist. Based on the following bug details, generate a **bug report** in a **Markdown table format** with these columns:
-  Summary | Description | Severity & Retest Result |
+  const combinedPrompt = `You are a QA specialist. Based on the following bug details, generate a **bug report** in a **Markdown table format** with the following columns:
+| Summary | Description | Severity & Retest Result |
 
-    Where:
-  - Summary: Brief title/summary of the bug
-  - Description: Format as follows:
-    **Steps to Reproduce:**
-    1. Step one
-    2. Step two
-    3. Step three
-    **Actual Result:**
-    What actually happened
-    **Expected Result:**
-    What should have happened
-  - Severity & Retest Result: Bug severity level and retest status
+**Instructions for each column:**
+- **Summary**: A concise yet comprehensive title that clearly describes the bug, including the actual behavior and the expected behavior. Format: "[Component or Feature] - [Brief description of issue and what the expected behavior should be]".
+- **Description**: Use the format below:
+  **Steps to Reproduce:**
+  1. Step one
+  2. Step two
+  3. Step three
 
-   Bug Details:
-  ${bugDetails}`;
+  **Actual Result:**
+  Clearly state what actually happened in the application.
+
+  **Expected Result:**
+  Clearly state what should have happened.
+
+- **Severity & Retest Result**: Indicate the severity level (e.g., Minor, Major, Critical) and whether the issue has been retested and fixed or not (e.g., "Retest Passed", "Still Failing", "Not Yet Retested").
+
+Use clear, professional QA language in your response.
+
+Bug Details:
+${bugDetails}`;
 
   if (!bugDetails.trim()) {
     showToast("Please enter bug details!", "warning");
@@ -32,6 +37,7 @@ async function generateBugReport() {
   bugTable.classList.add("hidden");
   tbody.innerHTML = "";
 
+  //API Key from local storage currently not use server proxy
   const apiKey = localStorage.getItem("OPENAI_API_KEY");
   if (!apiKey) {
     loading.classList.add("hidden");
@@ -52,6 +58,20 @@ async function generateBugReport() {
         temperature: 0.7,
       }),
     });
+
+    //BE Impmlementation using server proxy not use for now
+    // try {
+    //   const response = await fetch("/api/chat", {
+    //     method: "POST",
+    //     headers: {
+    //       "Content-Type": "application/json",
+    //     },
+    //     body: JSON.stringify({
+    //       model: "gpt-4o-mini",
+    //       messages: [{ role: "user", content: combinedPrompt }],
+    //       temperature: 0.7,
+    //     }),
+    //   });
 
     if (!response.ok) {
       throw new Error("Gagal mengambil data dari OpenAI!");
