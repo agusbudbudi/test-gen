@@ -1,0 +1,1 @@
+import{c as i}from"./state-DHDRmOVp.js";import{p as o}from"./index-b-28fc7P.js";const E=i()(o(r=>({historyEntries:[],addEntry:t=>r(e=>({historyEntries:[...e.historyEntries,{...t,createdAt:new Date().toISOString()}]})),deleteEntry:t=>r(e=>({historyEntries:e.historyEntries.filter((n,s)=>s!==t)})),clearHistory:()=>r({historyEntries:[]})}),{name:"history-storage"}));export{E as u};

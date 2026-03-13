@@ -1,0 +1,49 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #6366f1;
+  --color-primary-hover: #4f46e5;
+  --color-sidebar-bg: #1e1b4b;
+  --color-surface: #ffffff;
+  --color-surface-dark: #0f172a;
+}
+
+/* Enable class-based dark mode in Tailwind v4 */
+@variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  body {
+    @apply bg-surface text-slate-900 transition-colors duration-500;
+  }
+  .dark body {
+    @apply bg-surface-dark text-slate-100;
+  }
+  button, a {
+    @apply cursor-pointer;
+  }
+}
+
+@layer utilities {
+  .animate-slide-up {
+    animation: slide-up 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .animate-fade-in {
+    animation: fade-in 0.4s ease-out;
+  }
+  .hover-scale {
+    @apply transition-transform duration-200 hover:scale-[1.01] active:scale-[0.99];
+  }
+  .card-base {
+    @apply bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/50 rounded-2xl shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] transition-all;
+  }
+}
+
+@keyframes slide-up {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
