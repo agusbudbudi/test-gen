@@ -8,22 +8,22 @@ interface ResultTableProps {
 
 const ResultTable: React.FC<ResultTableProps> = ({ headers, rows }) => {
   return (
-    <div className="w-full overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
-      <table className="w-full text-sm text-left border-collapse bg-white dark:bg-slate-800">
-        <thead className="bg-slate-50 dark:bg-slate-900/50 text-slate-700 dark:text-slate-200 font-semibold uppercase tracking-wider text-xs">
+    <div className="w-full overflow-x-auto rounded-xl border border-slate-200 dark:border-border-brand">
+      <table className="w-full text-sm text-left border-collapse bg-white dark:bg-surface-card">
+        <thead className="bg-slate-50 dark:bg-primary/10 text-slate-700 dark:text-slate-200 font-semibold uppercase tracking-wider text-xs">
           <tr>
             {headers.map((header, idx) => (
-              <th key={idx} className="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
+              <th key={idx} className="px-6 py-4 border-b border-slate-200 dark:border-border-brand">
                 {header}
               </th>
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+        <tbody className="divide-y divide-slate-200 dark:divide-border-brand">
           {rows.map((row, rowIdx) => (
             <tr 
               key={rowIdx} 
-              className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors"
+              className="hover:bg-slate-50 dark:hover:bg-primary/5 transition-colors"
             >
               {row.map((cell, cellIdx) => {
                 const isStatus = cell === 'New' || cell === 'Improved'

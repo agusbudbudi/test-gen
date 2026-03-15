@@ -115,13 +115,13 @@ const BugReportPage = () => {
   }
 
   return (
-    <div className="space-y-8 animate-slide-up">
+    <div className="space-y-6 animate-slide-up">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
-          🪲 Bug Report Generator
+        <h1 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">
+        Bug Report Generator
         </h1>
-        <p className="text-slate-500 dark:text-slate-400 mt-1">
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
           Turn messy bug findings into professional, structured QA reports.
         </p>
       </div>
@@ -129,7 +129,7 @@ const BugReportPage = () => {
       <div className="space-y-4">
         <textarea
           placeholder="Explain the bug you found (steps, observations)..."
-          className="w-full h-48 px-5 py-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/50 rounded-2xl focus:ring-2 focus:ring-primary outline-none transition-all text-sm leading-relaxed dark:text-slate-200"
+          className="w-full h-48 px-5 py-4 bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-brand rounded-2xl focus:ring-2 focus:ring-primary outline-none transition-all text-sm leading-relaxed dark:text-slate-200"
           value={bugDetails}
           onChange={(e) => setBugDetails(e.target.value)}
         />
@@ -209,7 +209,7 @@ const BugReportPage = () => {
             <button
               onClick={handleGenerate}
               disabled={loading}
-              className="flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary-hover text-white font-semibold text-sm rounded-xl transition-all shadow-[0_8px_16px_-4px_rgba(var(--color-primary-rgb),0.2)] disabled:opacity-70 disabled:cursor-not-allowed hover-scale"
+              className="flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary-hover text-white font-semibold text-sm rounded-xl transition-all disabled:opacity-70 disabled:cursor-not-allowed hover-scale"
             >
               {loading ? (
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>

@@ -61,13 +61,13 @@ const SettingsPage = () => {
   ]
 
   return (
-    <div className="space-y-8 animate-slide-up">
+    <div className="space-y-6 animate-slide-up">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
-          ⚙️ Settings
+        <h1 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">
+          Settings
         </h1>
-        <p className="text-slate-500 dark:text-slate-400 mt-1">
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
           Configure your API keys, AI model, and integrations.
         </p>
       </div>
@@ -83,7 +83,7 @@ const SettingsPage = () => {
                 className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-sm font-medium transition-all w-full text-left ${
                   activeTab === tab.id
                     ? 'bg-primary/10 text-primary dark:bg-primary/15'
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-200'
+                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-primary/10 hover:text-slate-900 dark:hover:text-slate-200'
                 }`}
               >
                 {tab.icon}
@@ -97,7 +97,7 @@ const SettingsPage = () => {
         <div className="flex-1 min-w-0">
           {/* ── General Tab ── */}
           {activeTab === 'general' && (
-            <div className="bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-2xl p-6 space-y-6 animate-slide-up">
+            <div className="bg-white dark:bg-surface-card border border-slate-200 dark:border-border-brand rounded-2xl p-6 space-y-6 animate-slide-up">
               <div>
                 <h2 className="text-base font-semibold text-slate-900 dark:text-white mb-0.5">General</h2>
                 <p className="text-xs text-slate-500 dark:text-slate-400">OpenAI configuration for AI-powered features.</p>
@@ -113,7 +113,7 @@ const SettingsPage = () => {
                   <input
                     type={showApiKey ? 'text' : 'password'}
                     placeholder={apiKey ? '••••••••  (key saved)' : 'sk-...'}
-                    className="w-full pl-9 pr-10 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700/50 rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all text-sm dark:text-slate-200"
+                    className="w-full pl-9 pr-10 py-2.5 bg-slate-50 dark:bg-surface-dark border border-slate-200 dark:border-border-brand rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all text-sm dark:text-slate-200"
                     value={apiKeyInput}
                     onChange={(e) => setApiKeyInput(e.target.value)}
                   />
@@ -140,7 +140,7 @@ const SettingsPage = () => {
                 <select
                   value={selectedModel}
                   onChange={(e) => setSelectedModel(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700/50 rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all text-sm dark:text-slate-200"
+                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-surface-dark border border-slate-200 dark:border-border-brand rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all text-sm dark:text-slate-200"
                 >
                   <option value="gpt-4o">gpt-4o — Most Capable</option>
                   <option value="gpt-4o-mini">gpt-4o-mini — Faster & Cheaper</option>
@@ -161,7 +161,7 @@ const SettingsPage = () => {
                   max={30}
                   value={defaultTestCaseCount}
                   onChange={(e) => setDefaultTestCaseCount(parseInt(e.target.value) || 1)}
-                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700/50 rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all text-sm dark:text-slate-200"
+                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-surface-dark border border-slate-200 dark:border-border-brand rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all text-sm dark:text-slate-200"
                 />
               </div>
 
@@ -187,7 +187,7 @@ const SettingsPage = () => {
 
           {/* ── Jira Integration Tab ── */}
           {activeTab === 'jira' && (
-            <div className="bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-2xl p-6 space-y-6 animate-slide-up">
+            <div className="bg-white dark:bg-surface-card border border-slate-200 dark:border-border-brand rounded-2xl p-6 space-y-6 animate-slide-up">
               <div className="flex items-start justify-between">
                 <div>
                   <h2 className="text-base font-semibold text-slate-900 dark:text-white mb-0.5">Jira Integration</h2>
@@ -214,7 +214,7 @@ const SettingsPage = () => {
                 <input
                   type="url"
                   placeholder="https://yourcompany.atlassian.net"
-                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700/50 rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all text-sm dark:text-slate-200"
+                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-surface-dark border border-slate-200 dark:border-border-brand rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all text-sm dark:text-slate-200"
                   value={jiraUrl}
                   onChange={(e) => setJiraUrl(e.target.value)}
                 />
@@ -228,7 +228,7 @@ const SettingsPage = () => {
                 <input
                   type="email"
                   placeholder="you@company.com"
-                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700/50 rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all text-sm dark:text-slate-200"
+                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-surface-dark border border-slate-200 dark:border-border-brand rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all text-sm dark:text-slate-200"
                   value={jiraEmail}
                   onChange={(e) => setJiraEmail(e.target.value)}
                 />
@@ -243,7 +243,7 @@ const SettingsPage = () => {
                   <input
                     type={showJiraToken ? 'text' : 'password'}
                     placeholder={jiraToken ? '••••••••  (token saved)' : 'ATATT3xFfGF0...'}
-                    className="w-full pl-4 pr-10 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700/50 rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all text-sm dark:text-slate-200"
+                    className="w-full pl-4 pr-10 py-2.5 bg-slate-50 dark:bg-surface-dark border border-slate-200 dark:border-border-brand rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all text-sm dark:text-slate-200"
                     value={jiraToken}
                     onChange={(e) => setJiraToken(e.target.value)}
                   />
@@ -270,7 +270,7 @@ const SettingsPage = () => {
                 <input
                   type="text"
                   placeholder="QA"
-                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700/50 rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all text-sm dark:text-slate-200 uppercase"
+                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-surface-dark border border-slate-200 dark:border-border-brand rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all text-sm dark:text-slate-200 uppercase"
                   value={jiraProjectKey}
                   onChange={(e) => setJiraProjectKey(e.target.value.toUpperCase())}
                 />

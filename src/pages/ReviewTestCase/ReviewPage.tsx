@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Bot, Copy, Trash2, Upload, FileText, CheckCircle2, AlertCircle, Lightbulb } from 'lucide-react'
+import { Bot, Copy, Trash2, Upload, FileText, CheckCircle2, AlertCircle, Lightbulb, FolderPlus, Beaker } from 'lucide-react'
 import { useUIStore } from '@/stores/uiStore'
 import { useHistoryStore } from '@/stores/historyStore'
 import { useReviewTestCase } from '@/hooks/useReviewTestCase'
@@ -9,13 +9,17 @@ import { parseFile } from '@/lib/fileParser'
 import { cn } from '@/lib/utils'
 import ResultTable from '@/components/ResultTable/ResultTable'
 import { useResultStore } from '@/stores/resultStore'
+import { useTestCaseStore } from '@/stores/testCaseStore'
 import { useEffect } from 'react'
 import { History as HistoryIcon } from 'lucide-react'
+import AddToFolderModal from '@/pages/GenerateTestCase/components/AddToFolderModal'
 
 const ReviewPage = () => {
   const [testCaseInput, setTestCaseInput] = useState('')
+  const [isAddToFolderModalOpen, setIsAddToFolderModalOpen] = useState(false)
   const { review, loading, reviewResult } = useReviewTestCase()
   const addHistory = useHistoryStore((state) => state.addEntry) 
+  const addTestCase = useTestCaseStore((state) => state.addTestCase)
   const toast = useToast()
 
   const pendingReviewInput = useResultStore(state => state.pendingReviewInput)
@@ -96,14 +100,40 @@ const ReviewPage = () => {
       .catch(() => toast.error('Failed to copy to clipboard.'))
   }
 
+  const cleanHtml = (text: any) => {
+    if (!text) return ''
+    return String(text)
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<[^>]*>/g, '')
+      .trim()
+  }
+
+  const handleSaveToFolder = (folderId: string) => {
+    if (!reviewResult?.improvedVersion || reviewResult.improvedVersion.length === 0) return
+
+    reviewResult.improvedVersion.forEach(row => {
+      addTestCase({
+        folderId,
+        section: cleanHtml(row.Section),
+        caseType: cleanHtml(row['Case Type']),
+        title: cleanHtml(row.Title),
+        preconditions: cleanHtml(row.Precondition),
+        steps: cleanHtml(row.Step),
+        expectedResult: cleanHtml(row['Expected Result'])
+      })
+    })
+
+    toast.success(`Successfully added ${reviewResult.improvedVersion.length} test cases to folder.`)
+  }
+
   return (
-    <div className="space-y-8 animate-slide-up">
+    <div className="space-y-6 animate-slide-up">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
-          🤖 AI Test Case Reviewer
+        <h1 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+          AI Test Case Reviewer
         </h1>
-        <p className="text-slate-500 dark:text-slate-400 mt-1">
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
           Paste your test cases below for a detailed AI-driven review.
         </p>
       </div>
@@ -111,7 +141,7 @@ const ReviewPage = () => {
       <div className="space-y-4">
         <textarea
           placeholder="Paste the test cases you want AI to review..."
-          className="w-full h-64 px-5 py-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/50 rounded-2xl focus:ring-2 focus:ring-primary outline-none transition-all text-sm leading-relaxed dark:text-slate-200"
+          className="w-full h-64 px-5 py-4 bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-brand rounded-2xl focus:ring-2 focus:ring-primary outline-none transition-all text-sm leading-relaxed dark:text-slate-200"
           value={testCaseInput}
           onChange={(e) => setTestCaseInput(e.target.value)}
         />
@@ -238,6 +268,15 @@ const ReviewPage = () => {
                       <Copy size={14} />
                       Copy
                     </button>
+                    <div className="w-px h-4 bg-slate-200 dark:bg-slate-700 self-center mx-1" />
+                    <button 
+                      onClick={() => setIsAddToFolderModalOpen(true)}
+                      className="p-2 text-indigo-500 hover:text-indigo-600 dark:text-indigo-400 dark:hover:text-indigo-300 hover:bg-white dark:hover:bg-slate-700 rounded-lg transition-all flex items-center gap-2 text-xs font-bold"
+                      title="Add to Folder"
+                    >
+                      <FolderPlus size={14} />
+                      Add to Folder
+                    </button>
                   </div>
                 </div>
               </div>
@@ -259,6 +298,12 @@ const ReviewPage = () => {
           )}
         </div>
       )}
+
+      <AddToFolderModal 
+        isOpen={isAddToFolderModalOpen}
+        onClose={() => setIsAddToFolderModalOpen(false)}
+        onSave={handleSaveToFolder}
+      />
     </div>
   )
 }

@@ -20,8 +20,8 @@ const ChatBubble = ({ entry, index, onDelete }: any) => {
     )}>
       {/* Avatar */}
       <div className={cn(
-        "w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm",
-        isUser ? "bg-primary text-white" : "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
+        "w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm transition-transform hover:scale-110 cursor-pointer",
+        isUser ? "bg-primary text-white" : "bg-primary/10 dark:bg-primary/40 text-primary dark:text-indigo-300"
       )}>
         {isUser ? <User size={20} /> : <Bot size={20} />}
       </div>
@@ -38,10 +38,10 @@ const ChatBubble = ({ entry, index, onDelete }: any) => {
 
         {/* Bubble */}
         <div className={cn(
-          "p-5 rounded-2xl shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] border bg-white dark:bg-slate-800",
+          "p-5 rounded-2xl shadow-[0_2px_12px_-4px_rgba(0,0,0,0.05)] border bg-white dark:bg-surface-card",
           isUser 
-            ? "rounded-tr-none border-slate-200 dark:border-slate-700/50" 
-            : "rounded-tl-none border-slate-200 dark:border-slate-700/50"
+            ? "rounded-tr-none border-slate-200 dark:border-border-brand" 
+            : "rounded-tl-none border-slate-200 dark:border-border-brand"
         )}>
           {entry.type === 'prompt' ? (
             <div className="space-y-3">
@@ -67,7 +67,7 @@ const ChatBubble = ({ entry, index, onDelete }: any) => {
             </div>
           ) : entry.type === 'review' ? (
             <div className="space-y-4">
-              <div className="bg-slate-50 dark:bg-slate-900/40 p-4 rounded-xl border border-slate-100 dark:border-slate-800 space-y-2">
+              <div className="bg-slate-50 dark:bg-surface-dark p-4 rounded-xl border border-slate-100 dark:border-border-brand space-y-2">
                 <p className="text-sm font-bold text-slate-800 dark:text-white">Review Summary</p>
                 <p className="text-xs text-slate-600 dark:text-slate-400 italic">"{entry.content.summary}"</p>
               </div>
@@ -75,7 +75,7 @@ const ChatBubble = ({ entry, index, onDelete }: any) => {
               {entry.content.improvedVersion && (
                 <div className="space-y-2">
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Improved Version</p>
-                  <div className="overflow-x-auto min-w-[300px] md:min-w-[600px] border border-slate-100 dark:border-slate-800 rounded-xl">
+                  <div className="overflow-x-auto min-w-[300px] md:min-w-[600px] border border-slate-100 dark:border-border-brand rounded-xl">
                     <ResultTable 
                       headers={['Status', 'No', 'Section', 'Case Type', 'Title', 'Precondition', 'Step', 'Expected Result']}
                       rows={(() => {
@@ -200,10 +200,10 @@ const HistoryPage = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
-            🕰️ History
+          <h1 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">
+            History
           </h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             Review and manage your past generation results.
           </p>
         </div>
@@ -222,11 +222,11 @@ const HistoryPage = () => {
       {/* History List */}
       <div 
         ref={scrollRef}
-        className="flex-1 overflow-y-auto px-4 pt-4 pb-0 scroll-smooth scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700"
+        className="flex-1 overflow-y-auto px-4 pt-4 pb-0 scroll-smooth scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-border-brand"
       >
         {historyEntries.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center opacity-50 space-y-4">
-            <div className="w-16 h-16 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full flex items-center justify-center text-slate-400">
+            <div className="w-16 h-16 bg-white dark:bg-surface-card border border-slate-200 dark:border-border-brand rounded-full flex items-center justify-center text-slate-400">
               <HistoryIcon size={32} />
             </div>
             <div>

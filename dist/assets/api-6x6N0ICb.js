@@ -1,1 +1,0 @@
-async function n(a,o){const r={"Content-Type":"application/json"};o&&(r.Authorization=`Bearer ${o}`);const t=await fetch("/api/chat",{method:"POST",headers:r,body:JSON.stringify(a)});if(!t.ok){const e=await t.json().catch(()=>({}));throw new Error(e.error||e.details||"Failed to fetch from OpenAI")}return t.json()}export{n as f};

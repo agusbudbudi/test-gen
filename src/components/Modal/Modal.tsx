@@ -8,6 +8,7 @@ interface ModalProps {
   title: string
   children: React.ReactNode
   maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl'
+  noPadding?: boolean
 }
 
 const Modal: React.FC<ModalProps> = ({ 
@@ -15,7 +16,8 @@ const Modal: React.FC<ModalProps> = ({
   onClose, 
   title, 
   children,
-  maxWidth = 'md'
+  maxWidth = 'md',
+  noPadding = false
 }) => {
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
@@ -53,25 +55,28 @@ const Modal: React.FC<ModalProps> = ({
       {/* Content */}
       <div 
         className={cn(
-          "relative w-full bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700/50 overflow-hidden animate-in zoom-in-95 duration-200",
+          "relative w-full bg-white dark:bg-surface-card rounded-2xl shadow-2xl border border-slate-200 dark:border-border-brand overflow-hidden animate-in zoom-in-95 duration-200",
           maxWidthClasses[maxWidth]
         )}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700/50">
-          <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 italic">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-border-brand">
+          <h3 className="text-lg font-bold text-slate-800 dark:text-white">
             {title}
           </h3>
           <button 
             onClick={onClose}
-            className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 transition-colors"
+            className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-primary/20 text-slate-500 transition-colors"
           >
             <X size={20} />
           </button>
         </div>
 
         {/* Body */}
-        <div className="p-6 overflow-y-auto max-h-[80vh]">
+        <div className={cn(
+          "max-h-[80vh]",
+          noPadding ? "flex flex-col overflow-hidden" : "p-6 overflow-y-auto"
+        )}>
           {children}
         </div>
       </div>

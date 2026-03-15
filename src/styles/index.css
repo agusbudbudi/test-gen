@@ -1,24 +1,52 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #6366f1;
-  --color-primary-hover: #4f46e5;
-  --color-sidebar-bg: #1e1b4b;
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-sidebar-bg: var(--sidebar-bg);
   --color-surface: #ffffff;
-  --color-surface-dark: #0f172a;
+  --color-surface-dark: var(--surface-dark);
+  --color-surface-card: var(--surface-card);
+  --color-border-brand: var(--border-brand);
+  --color-primary-rgb: var(--primary-rgb);
 }
 
 /* Enable class-based dark mode in Tailwind v4 */
 @variant dark (&:where(.dark, .dark *));
 
 @layer base {
+  :root {
+    --primary: #6366f1;
+    --primary-hover: #4f46e5;
+    --sidebar-bg: #1e1b4b;
+    --surface-dark: #f8fafc;
+    --surface-card: #ffffff;
+    --border-brand: #e2e8f0;
+  }
+
+  .dark {
+    --primary: #6366f1;
+    --primary-hover: #4f46e5;
+    --primary-rgb: 99, 102, 241;
+    --sidebar-bg: #11101D;
+    --surface-dark: #0A0912;
+    --surface-card: #11101D;
+    --border-brand: #1F1D2C;
+  }
+
   body {
     @apply bg-surface text-slate-900 transition-colors duration-500;
   }
   .dark body {
     @apply bg-surface-dark text-slate-100;
   }
-  button, a {
+
+  button, 
+  [role="button"],
+  a,
+  input[type="checkbox"],
+  input[type="radio"],
+  label {
     @apply cursor-pointer;
   }
 }
@@ -34,7 +62,7 @@
     @apply transition-transform duration-200 hover:scale-[1.01] active:scale-[0.99];
   }
   .card-base {
-    @apply bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/50 rounded-2xl shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] transition-all;
+    @apply bg-surface-card dark:bg-surface-card border border-border-brand dark:border-border-brand rounded-2xl shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.4)] transition-all;
   }
 }
 

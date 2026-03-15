@@ -15,6 +15,7 @@ const ReviewPage   = lazy(() => import('@/pages/ReviewTestCase/ReviewPage'))
 const BugReportPage = lazy(() => import('@/pages/BugReport/BugReportPage'))
 const HistoryPage  = lazy(() => import('@/pages/History/HistoryPage'))
 const SettingsPage = lazy(() => import('@/pages/Settings/SettingsPage'))
+const TestManagementPage = lazy(() => import('@/pages/TestManagement/TestManagementPage'))
 
 const App = () => {
   const { 
@@ -51,6 +52,7 @@ const App = () => {
               <Route path="/bug-report" element={<BugReportPage />} />
               <Route path="/history" element={<HistoryPage />} />
               <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/test-management" element={<TestManagementPage />} />
               <Route path="*" element={<Navigate to="/generate" replace />} />
             </Route>
           </Routes>
