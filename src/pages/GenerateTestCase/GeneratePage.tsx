@@ -289,6 +289,7 @@ ${data.description}`
             >
               <img src="/assets/icons/jira-icon.png" className="w-4 h-4 object-contain" alt="Jira" />
               Jira URL
+              <span className="ml-1 px-1.5 py-0.5 text-[8px] font-bold bg-indigo-500 text-white dark:bg-indigo-400 dark:text-indigo-950 rounded-md shadow-indigo-500/20">NEW</span>
             </button>
           </div>
 

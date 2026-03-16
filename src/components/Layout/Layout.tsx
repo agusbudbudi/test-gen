@@ -37,7 +37,7 @@ const Layout = () => {
       
       <main 
         className={cn(
-          "flex-1 transition-all duration-300 p-6 lg:p-8 pt-20 lg:pt-6",
+          "flex-1 transition-all duration-300 p-4 lg:p-6 py-16 lg:py-4",
           sidebarCollapsed ? "lg:ml-16" : "lg:ml-52",
           "ml-0" // Reset margin for mobile
         )}
