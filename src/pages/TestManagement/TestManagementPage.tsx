@@ -722,7 +722,27 @@ const TestManagementPage = () => {
                       className="mt-1 block w-full px-3 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
                     />
                   </div>
+                  <div>
+                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Tags</span>
+                    <input
+                      type="text"
+                      value={editForm.tags || ''}
+                      onChange={(e) => setEditForm(prev => ({ ...prev, tags: e.target.value }))}
+                      className="mt-1 block w-full px-3 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      placeholder="e.g. ai-generated, sprint-12"
+                    />
+                  </div>
                 </div>
+
+                {editForm.tags && (
+                  <div className="flex flex-wrap gap-1.5 mb-6">
+                    {editForm.tags.split(',').filter(t => t.trim() !== '').map((tagStr, idx) => (
+                      <span key={idx} className="px-2 py-0.5 rounded-md bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider">
+                        {tagStr.trim()}
+                      </span>
+                    ))}
+                  </div>
+                )}
 
                 <div className="space-y-4">
                   <div>

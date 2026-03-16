@@ -46,6 +46,7 @@ export interface TestCase {
   preconditions: string
   steps: string
   expectedResult: string
+  tags: string
   createdAt: string
   updatedAt: string
 }
@@ -405,7 +406,7 @@ export const useTestCaseStore = create<TestManagementState>()(
     {
       name: 'test-management-storage',
       storage: createJSONStorage(() => idbStorage),
-      version: 2,
+      version: 3,
       migrate: (persistedState: any, version: number) => {
         if (version === 0) {
           // Migrate 'NOT RUN' to 'UNTESTED'
@@ -427,6 +428,16 @@ export const useTestCaseStore = create<TestManagementState>()(
             persistedState.testCases = persistedState.testCases.filter((tc: any) => 
               !tc.folderId || folderIds.has(tc.folderId)
             )
+          }
+        }
+
+        if (version < 3) {
+          // Initialize tags field for existing test cases
+          if (persistedState.testCases) {
+            persistedState.testCases = persistedState.testCases.map((tc: any) => ({
+              ...tc,
+              tags: tc.tags || ''
+            }))
           }
         }
 

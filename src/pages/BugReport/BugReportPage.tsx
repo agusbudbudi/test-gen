@@ -40,7 +40,7 @@ const BugReportPage = () => {
     setIsLinkModalOpen(true)
   }
 
-  const handleExportToJira = async (linkConfig: { jiraUrl: string; linkType: string }) => {
+  const handleExportToJira = async (linkConfig: { jiraUrl: string; linkType: string; issueType: string }) => {
     if (!bugData) return
     const result = await exportToJira(bugData, linkConfig)
     if (result) {

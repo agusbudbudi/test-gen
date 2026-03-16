@@ -5,21 +5,23 @@ import { Link2, Trash2, Send } from 'lucide-react'
 interface LinkWorkItemModalProps {
   isOpen: boolean
   onClose: () => void
-  onExport: (linkData: { jiraUrl: string; linkType: string }) => void
+  onExport: (linkData: { jiraUrl: string; linkType: string; issueType: string }) => void
   exporting: boolean
 }
 
 const LinkWorkItemModal = ({ isOpen, onClose, onExport, exporting }: LinkWorkItemModalProps) => {
   const [jiraUrl, setJiraUrl] = useState('')
   const [linkType, setLinkType] = useState('relates to')
+  const [issueType, setIssueType] = useState('Feedback')
 
   const handleExport = () => {
-    onExport({ jiraUrl: jiraUrl.trim(), linkType })
+    onExport({ jiraUrl: jiraUrl.trim(), linkType, issueType })
   }
 
   const handleClear = () => {
     setJiraUrl('')
     setLinkType('relates to')
+    setIssueType('Feedback')
   }
 
   return (
@@ -30,6 +32,20 @@ const LinkWorkItemModal = ({ isOpen, onClose, onExport, exporting }: LinkWorkIte
         </p>
 
         <div className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+              Jira Issue Type
+            </label>
+            <select
+              value={issueType}
+              onChange={(e) => setIssueType(e.target.value)}
+              className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700/50 rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all text-sm dark:text-slate-200"
+            >
+              <option value="Bug">Bug</option>
+              <option value="Feedback">Feedback</option>
+            </select>
+          </div>
+
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
               Relationship Type

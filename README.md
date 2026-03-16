@@ -7,7 +7,6 @@ A powerful AI-driven test case generator and management platform. Build, organiz
 [![Vite](https://img.shields.io/badge/Vite-5-646CFF?logo=vite)](https://vitejs.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-38B2AC?logo=tailwind-css)](https://tailwindcss.com/)
 
-![TestGen Logo](public/assets/images/testgen.png)
 
 ## ✨ New in V2
 
