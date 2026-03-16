@@ -119,7 +119,8 @@ const ReviewPage = () => {
         title: cleanHtml(row.Title),
         preconditions: cleanHtml(row.Precondition),
         steps: cleanHtml(row.Step),
-        expectedResult: cleanHtml(row['Expected Result'])
+        expectedResult: cleanHtml(row['Expected Result']),
+        tags: 'ai-generated'
       })
     })
 
