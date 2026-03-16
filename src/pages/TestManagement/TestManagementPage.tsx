@@ -32,7 +32,7 @@ const TestManagementPage = () => {
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set())
   const [draggedItem, setDraggedItem] = useState<{ id: string, type: 'folder' | 'file' } | null>(null)
   const [dragOverFolderId, setDragOverFolderId] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<'testcases' | 'testruns'>('testcases')
+  const [activeTab, setActiveTab] = useState<'testcases' | 'testruns'>('testruns')
 
   React.useEffect(() => {
     if (folders.length > 0 && !hasInitializedCollapse) {
@@ -508,18 +508,6 @@ const TestManagementPage = () => {
       {/* ── Tab Bar ── */}
       <div className="flex gap-1 mb-4 border-b border-slate-200 dark:border-slate-800">
         <button
-          onClick={() => setActiveTab('testcases')}
-          className={cn(
-            'flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors -mb-px',
-            activeTab === 'testcases'
-              ? 'border-primary text-primary'
-              : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
-          )}
-        >
-          <Beaker size={16} />
-          Test Cases
-        </button>
-        <button
           onClick={() => setActiveTab('testruns')}
           className={cn(
             'flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors -mb-px',
@@ -530,6 +518,18 @@ const TestManagementPage = () => {
         >
           <Play size={16} />
           Test Runs
+        </button>
+        <button
+          onClick={() => setActiveTab('testcases')}
+          className={cn(
+            'flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors -mb-px',
+            activeTab === 'testcases'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+          )}
+        >
+          <Beaker size={16} />
+          Test Cases
         </button>
       </div>
 
