@@ -104,7 +104,8 @@ const GeneratePage = () => {
         title: cleanHtml(row[titleIdx]),
         preconditions: cleanHtml(row[preconIdx]),
         steps: cleanHtml(row[stepIdx]),
-        expectedResult: cleanHtml(row[expectIdx])
+        expectedResult: cleanHtml(row[expectIdx]),
+        tags: [tags, 'ai-generated'].filter(t => t.trim() !== '').join(', ')
       })
     })
 
@@ -476,7 +477,7 @@ ${data.description}`
     {/* Model Switcher Banner - Subtle Highlight Style */}
     <button
       onClick={() => navigate('/settings?tab=general')}
-      className="w-full mt-2 relative overflow-hidden group rounded-2xl bg-indigo-50 dark:bg-indigo-500/5 border border-indigo-100 dark:border-indigo-500/20 p-4 text-left transition-all hover:border-indigo-300 dark:hover:border-indigo-500/40 hover:shadow-md hover:shadow-indigo-500/10 active:scale-[0.98]"
+      className="w-full mt-2 relative overflow-hidden group rounded-2xl bg-indigo-500/10 dark:bg-indigo-500/5 border border-indigo-100 dark:border-indigo-500/20 p-4 text-left transition-all hover:border-indigo-300 dark:hover:border-indigo-500/40 hover:shadow-md hover:shadow-indigo-500/10 active:scale-[0.98]"
     >
       <div className="absolute -right-2 -top-2 text-indigo-500/10 group-hover:text-indigo-500/20 transition-colors">
         <Sparkles size={80} />

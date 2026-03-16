@@ -41,9 +41,9 @@ export function useJiraExport() {
   /**
    * bugData is the full 2D array: first row = headers, rest = data rows
    */
-  const exportToJira = useCallback(async (
+    const exportToJira = useCallback(async (
     bugData: string[][], 
-    linkConfig?: { jiraUrl?: string; linkType?: string }
+    linkConfig?: { jiraUrl?: string; linkType?: string; issueType?: string }
   ) => {
     if (!jiraUrl || !jiraEmail || !jiraToken || !jiraProjectKey) {
       addToast('Please configure Jira settings first (Settings → Jira Integration).', 'warning')
@@ -94,10 +94,6 @@ export function useJiraExport() {
       type: "doc",
       content: [
         {
-          type: "paragraph",
-          content: [{ type: "text", text: "Berikut adalah laporan bug terstruktur:" }]
-        },
-        {
           type: "table",
           attrs: { isNumberColumnEnabled: false, layout: "default" },
           content: adfRows
@@ -130,6 +126,7 @@ export function useJiraExport() {
           description: adfDocument,
           linkedIssueKey,
           linkType: linkConfig?.linkType,
+          issueType: linkConfig?.issueType,
         }),
       })
 

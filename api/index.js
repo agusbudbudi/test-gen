@@ -73,7 +73,8 @@ app.post("/api/jira/issue", async (req, res) => {
   try {
     const { 
       jiraUrl, email, token, projectKey, summary, description,
-      linkedIssueKey, linkType // Optional for linking
+      linkedIssueKey, linkType, // Optional for linking
+      issueType // Optional issue type
     } = req.body || {};
 
     if (!jiraUrl || !email || !token || !projectKey || !summary) {
@@ -105,13 +106,16 @@ app.post("/api/jira/issue", async (req, res) => {
       }
     }
 
+    const finalIssueType = issueType || "Feedback";
+    const label = `testgen-auto-created-${finalIssueType.toLowerCase()}`;
+
     const payload = {
       fields: {
         project: { key: projectKey },
         summary,
         description: adfDescription,
-        issuetype: { name: "Feedback" },
-        labels: ["testgen-auto-created-feedback"],
+        issuetype: { name: finalIssueType },
+        labels: [label],
       },
     };
 
