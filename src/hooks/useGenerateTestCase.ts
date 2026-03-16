@@ -36,17 +36,24 @@ export function useGenerateTestCase() {
     setLoading(true)
     setResultData(null)
 
-    const combinedPrompt = `You are a professional QA engineer. Generate a set of ${count} comprehensive test cases based on the provided requirements.
-The input may contain a single user story or multiple requirements (e.g., from Jira or Confluence). Analyze all provided details and generate test cases that cover all requirements.
+    const combinedPrompt = `You are a professional QA engineer. Generate minimum ${count} and maximum as many as possible comprehensive test cases based on the provided requirements.
 
-Return the result in valid JSON format as an array of objects.
-Each object must have these exactly these keys: "No", "Section", "Case Type", "Title", "Precondition", "Step", "Expected Result".
+### OUTPUT RULES:
+1. **Format**: You MUST return a valid JSON array of objects.
+2. **Schema**: Each object must have these exactly these keys: "No", "Section", "Case Type", "Title", "Precondition", "Step", "Expected Result".
+3. **Content Formatting (STRICT)**: 
+   - Apply all "Global Instructions" (Gherkin syntax, list styles, etc.) strictly to the text *inside* the JSON fields.
+   - Use \`<br>\` for ALL line breaks within the strings. Do NOT use literal newlines (\\n).
+   - Ensure "Precondition", "Step", and "Expected Result" follow Gherkin syntax (Given/When/Then/And) if requested.
 
-${userStory ? `User Story / Requirements:\n${userStory}\n` : ''}
-${promptDetails ? `Prompt Details / Context:\n${promptDetails}\n` : ''}
-${promptInstructions ? `Global Instructions:\n${promptInstructions}\n` : ''}
+### INPUT DATA:
+${userStory ? `**User Story / Requirements**:\n${userStory}\n` : ''}
+${promptDetails ? `**Prompt Details / Context**:\n${promptDetails}\n` : ''}
 
-**Output only the raw JSON array.**`
+### GLOBAL INSTRUCTIONS (PRIORITY):
+${promptInstructions}
+
+**Only output the raw JSON array.**`
 
     try {
       const data = await fetchChat({
