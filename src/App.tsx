@@ -28,6 +28,9 @@ const TestManagementPage = lazy(
 const ProductKnowledgePage = lazy(
   () => import("@/pages/ProductKnowledge/ProductKnowledgePage"),
 );
+const ACAnalyzerPage = lazy(
+  () => import("@/pages/ACAnalyzer/ACAnalyzerPage"),
+);
 
 const App = () => {
   const {
@@ -74,6 +77,10 @@ const App = () => {
               <Route
                 path="/product-knowledge"
                 element={<ProductKnowledgePage />}
+              />
+              <Route
+                path="/ac-analyzer"
+                element={<ACAnalyzerPage />}
               />
               <Route path="*" element={<Navigate to="/generate" replace />} />
             </Route>

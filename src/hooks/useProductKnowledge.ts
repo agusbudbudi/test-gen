@@ -170,6 +170,10 @@ Please structure the output exactly like this (but adapt the content based on th
 [A wrap-up table summarizing Key Areas and their Behaviors]
 
 ---
+# 📚 8. Domain Glossary
+[A Markdown Table identifying technical terms, business jargon, or abbreviations found in the ACs and providing clear definitions for them. Format: | Term | Definition |]
+
+---
 # ✅ Document Info
 **Version:** 1.0
 **Owner:** QA Team

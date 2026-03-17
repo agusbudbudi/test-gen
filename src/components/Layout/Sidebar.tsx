@@ -13,6 +13,7 @@ import {
   FolderTree,
   Beaker,
   BookOpen,
+  ClipboardList,
 } from "lucide-react";
 import { useUIStore } from "@/stores/uiStore";
 import { useThemeStore } from "@/stores/themeStore";
@@ -34,6 +35,7 @@ const Sidebar = () => {
         { to: "/generate", icon: FileCheck, label: "AI Generate TCs" },
         { to: "/review", icon: Bot, label: "AI Review TCs" },
         { to: "/bug-report", icon: Bug, label: "AI Bug Report" },
+        { to: "/ac-analyzer", icon: ClipboardList, label: "AI AC Analyzer" },
         {
           to: "/product-knowledge",
           icon: BookOpen,
