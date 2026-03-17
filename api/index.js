@@ -41,6 +41,47 @@ app.post("/api/chat", async (req, res) => {
         .json({ error: "Invalid payload: expected { model, messages, ... }" });
     }
 
+    // Handle streaming
+    if (payload.stream) {
+      console.log('Starting AI stream for model:', payload.model);
+      const r = await axios.post(
+        "https://api.openai.com/v1/chat/completions",
+        payload,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${apiKey}`,
+          },
+          responseType: 'stream',
+          timeout: 60000,
+        }
+      );
+
+      // Set headers for SSE
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
+      res.setHeader('X-Accel-Buffering', 'no'); // Disable buffering in Nginx if any
+      
+      r.data.on('data', (chunk) => {
+        res.write(chunk);
+      });
+
+      r.data.on('end', () => {
+        res.end();
+      });
+
+      r.data.on('error', (err) => {
+        console.error('OpenAI stream error:', err);
+        if (!res.headersSent) {
+          res.status(500).end();
+        } else {
+          res.end();
+        }
+      });
+      return;
+    }
+
     const r = await axios.post(
       "https://api.openai.com/v1/chat/completions",
       payload,
@@ -55,6 +96,11 @@ app.post("/api/chat", async (req, res) => {
 
     res.status(r.status).json(r.data);
   } catch (e) {
+    if (e.response && e.response.data && typeof e.response.data.on === 'function') {
+      // In stream mode, error might be in the stream
+      res.status(500).json({ error: "Stream error" });
+      return;
+    }
     if (e.response) {
       // Forward OpenAI error details if available
       return res.status(e.response.status).json(e.response.data);

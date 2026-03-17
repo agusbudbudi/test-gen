@@ -14,6 +14,12 @@ interface ResultState {
   bugResult: string[][] | null
   setBugResult: (result: string[][] | null) => void
 
+  // Product Knowledge Results
+  productKnowledgeResult: string | null
+  setProductKnowledgeResult: (result: string | null) => void
+  productKnowledgeUrls: string[]
+  setProductKnowledgeUrls: (urls: string[]) => void
+
   // Pending Review Transfer
   pendingReviewInput: string | null
   setPendingReviewInput: (input: string | null) => void
@@ -35,10 +41,23 @@ export const useResultStore = create<ResultState>((set) => ({
   bugResult: null,
   setBugResult: (result) => set({ bugResult: result }),
 
+  // Product Knowledge Results
+  productKnowledgeResult: null,
+  setProductKnowledgeResult: (result) => set({ productKnowledgeResult: result }),
+  productKnowledgeUrls: [''],
+  setProductKnowledgeUrls: (urls) => set({ productKnowledgeUrls: urls }),
+
   // Pending Review Transfer
   pendingReviewInput: null,
   setPendingReviewInput: (input) => set({ pendingReviewInput: input }),
 
   // Helper to clear all results
-  clearAllResults: () => set({ generateResult: null, reviewResult: null, bugResult: null, pendingReviewInput: null }),
+  clearAllResults: () => set({ 
+    generateResult: null, 
+    reviewResult: null, 
+    bugResult: null, 
+    productKnowledgeResult: null,
+    productKnowledgeUrls: [''],
+    pendingReviewInput: null 
+  }),
 }))
