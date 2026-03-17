@@ -26,6 +26,17 @@ interface UIState {
   setJiraToken: (token: string) => void
   jiraProjectKey: string
   setJiraProjectKey: (key: string) => void
+  // Confluence Integration
+  confluenceUrl: string
+  setConfluenceUrl: (url: string) => void
+  confluenceEmail: string
+  setConfluenceEmail: (email: string) => void
+  confluenceToken: string
+  setConfluenceToken: (token: string) => void
+  confluenceSpaceKey: string
+  setConfluenceSpaceKey: (key: string) => void
+  confluenceParentPageId: string
+  setConfluenceParentPageId: (id: string) => void
   // Modals
   isPromptModalOpen: boolean
   setPromptModalOpen: (open: boolean) => void
@@ -72,6 +83,17 @@ export const useUIStore = create<UIState>()(
       setJiraToken: (token) => set({ jiraToken: token }),
       jiraProjectKey: '',
       setJiraProjectKey: (key) => set({ jiraProjectKey: key }),
+      // Confluence Integration
+      confluenceUrl: '',
+      setConfluenceUrl: (url) => set({ confluenceUrl: url }),
+      confluenceEmail: '',
+      setConfluenceEmail: (email) => set({ confluenceEmail: email }),
+      confluenceToken: '',
+      setConfluenceToken: (token) => set({ confluenceToken: token }),
+      confluenceSpaceKey: '',
+      setConfluenceSpaceKey: (key) => set({ confluenceSpaceKey: key }),
+      confluenceParentPageId: '',
+      setConfluenceParentPageId: (id) => set({ confluenceParentPageId: id }),
       // Modals
       isPromptModalOpen: false,
       setPromptModalOpen: (open) => set({ isPromptModalOpen: open }),
@@ -101,6 +123,11 @@ export const useUIStore = create<UIState>()(
         jiraEmail: state.jiraEmail,
         jiraToken: state.jiraToken,
         jiraProjectKey: state.jiraProjectKey,
+        confluenceUrl: state.confluenceUrl,
+        confluenceEmail: state.confluenceEmail,
+        confluenceToken: state.confluenceToken,
+        confluenceSpaceKey: state.confluenceSpaceKey,
+        confluenceParentPageId: state.confluenceParentPageId,
       }),
     }
   )

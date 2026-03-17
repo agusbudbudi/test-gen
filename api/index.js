@@ -258,6 +258,65 @@ app.get("/api/jira/issue/:key", async (req, res) => {
   }
 });
 
+// Proxy endpoint to create a Confluence page
+app.post("/api/confluence/page", async (req, res) => {
+  try {
+    const { 
+      confluenceUrl, email, token, spaceKey, title, content, parentPageId 
+    } = req.body || {};
+
+    if (!confluenceUrl || !email || !token || !spaceKey || !title || !content) {
+      return res.status(400).json({ error: "Missing required fields: confluenceUrl, email, token, spaceKey, title, content" });
+    }
+
+    const credentials = Buffer.from(`${email}:${token}`).toString("base64");
+    const baseUrl = confluenceUrl.replace(/\/$/, "");
+
+    // Prepare payload for Confluence API (v1)
+    const payload = {
+      type: "page",
+      title: title,
+      space: { key: spaceKey },
+      body: {
+        storage: {
+          value: content, // We expect HTML/XHTML here
+          representation: "storage"
+        }
+      }
+    };
+
+    if (parentPageId) {
+      payload.ancestors = [{ id: parentPageId }];
+    }
+
+    const r = await axios.post(`${baseUrl}/rest/api/content`, payload, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Basic ${credentials}`,
+        Accept: "application/json",
+      },
+      timeout: 15000,
+    });
+
+    res.status(201).json({
+      id: r.data.id,
+      title: r.data.title,
+      url: `${baseUrl}${r.data._links.webui}`,
+    });
+  } catch (e) {
+    if (e.response) {
+      return res.status(e.response.status).json({
+        error: "Confluence API error",
+        details: e.response.data,
+      });
+    }
+    res.status(500).json({
+      error: "Proxy error",
+      details: String(e && e.message ? e.message : e),
+    });
+  }
+});
+
 // Serve the app statically from the dist folder in production
 const distDir = path.join(__dirname, "..", "dist");
 // Vercel handles static serving via rewrites in vercel.json, 
