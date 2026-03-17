@@ -14,6 +14,7 @@ import {
   Beaker,
   BookOpen,
   ClipboardList,
+  Table as TableIcon,
 } from "lucide-react";
 import { useUIStore } from "@/stores/uiStore";
 import { useThemeStore } from "@/stores/themeStore";
@@ -46,6 +47,7 @@ const Sidebar = () => {
     {
       group: "Execution & Insight",
       items: [
+        { to: "/release-visibility", icon: TableIcon, label: "Release Visibility" },
         { to: "/test-management", icon: Beaker, label: "Test Management" },
         { to: "/history", icon: History, label: "History" },
       ],
