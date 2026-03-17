@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react'
-import { Plus, Play, Trash2, Edit2, Check, X, ChevronDown, FileText, ClipboardList, BarChart3, Clock, History, Activity, Download } from 'lucide-react'
+import { Plus, Play, Trash2, Edit2, Check, X, ChevronDown, ChevronRight, FileText, ClipboardList, BarChart3, Clock, History, Activity, Download } from 'lucide-react'
 import { toPng } from 'html-to-image'
 import { useTestCaseStore, TestRun, TestRunItem, RunItemStatus, ActivityLog } from '@/stores/testCaseStore'
 import CreateTestRunModal from './CreateTestRunModal'
@@ -220,10 +220,19 @@ const TestRunsPage: React.FC = () => {
   const [pendingNotes, setPendingNotes] = useState<Record<string, string>>({})
   const [isExporting, setIsExporting] = useState(false)
   const [exportTimestamp, setExportTimestamp] = useState('')
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set())
 
   const selectedRun = testRuns.find(r => r.id === selectedRunId) ?? null
 
   const handleToggleReport = () => setReportExpanded(!isReportExpanded)
+  const toggleGroupCollapse = (fid: string) => {
+    setCollapsedGroups(prev => {
+      const next = new Set(prev)
+      if (next.has(fid)) next.delete(fid)
+      else next.add(fid)
+      return next
+    })
+  }
 
   const handleDownloadReport = useCallback(async () => {
     if (!reportRef.current || !selectedRun) return
@@ -485,167 +494,225 @@ const TestRunsPage: React.FC = () => {
                       )}
                     </div>
 
-                    {selectedRun.items.map(item => {
-                      const cfg = STATUS_CONFIG[item.status] || STATUS_CONFIG['UNTESTED']
-                      const isSelected = selectedItemIds.has(item.id)
-                      const isActive = selectedRunItemId === item.id
+                    {/* Grouping items by folder */}
+                    {(() => {
+                      const { folders: allFolders } = useTestCaseStore.getState()
+                      
+                      // Group items by folderId
+                      const groups: Record<string, TestRunItem[]> = {}
+                      selectedRun.items.forEach(item => {
+                        const fid = item.folderId || 'root'
+                        if (!groups[fid]) groups[fid] = []
+                        groups[fid].push(item)
+                      })
 
-                      return (
-                        <div 
-                          key={item.id} 
-                          onClick={() => setSelectedRunItemId(isActive ? null : item.id)}
-                          className={cn(
-                            "border-b border-slate-100 dark:border-slate-800/60 last:border-b-0 transition-all cursor-pointer",
-                            isSelected && "bg-primary/[0.03] dark:bg-primary/[0.05]",
-                            isActive && "bg-primary/5 dark:bg-primary/10 border-l-3 border-l-primary"
-                          )}
-                        >
-                          {/* Row */}
-                          <div className={cn(
-                            "grid gap-0 items-center px-0 py-0 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors",
-                            selectedRunItemId 
-                              ? "grid-cols-[48px_80px_1fr]" 
-                              : "grid-cols-[48px_80px_1fr_125px_160px]"
-                          )}>
-                            {/* Checkbox */}
-                            <div className="h-full flex items-center justify-center self-stretch">
-                              <label
-                                className={cn(
-                                  "w-12 self-stretch flex items-center justify-center transition-all cursor-pointer group/checkbox relative",
-                                  isSelected ? "bg-primary/5 dark:bg-primary/10" : "hover:bg-slate-100 dark:hover:bg-slate-800"
+                      // Sort groups: root first, then by folder name
+                      const sortedFolderIds = Object.keys(groups).sort((a, b) => {
+                        if (a === 'root') return -1
+                        if (b === 'root') return 1
+                        const folderA = allFolders.find(f => f.id === a)
+                        const folderB = allFolders.find(f => f.id === b)
+                        return (folderA?.name || '').localeCompare(folderB?.name || '')
+                      })
+
+                      return sortedFolderIds.map(fid => {
+                        const items = groups[fid]
+                        const folder = fid === 'root' ? null : allFolders.find(f => f.id === fid)
+                        const isCollapsed = collapsedGroups.has(fid)
+                        
+                        return (
+                          <div key={fid}>
+                            {/* Folder Header */}
+                            <div 
+                              onClick={() => toggleGroupCollapse(fid)}
+                              className="px-4 py-1.5 bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-800 flex items-center gap-2 sticky top-[33px] z-[9] cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors group/header"
+                            >
+                              <div className="p-1 bg-white dark:bg-slate-900 rounded border border-slate-200 dark:border-slate-700 group-hover/header:border-primary transition-colors">
+                                {isCollapsed ? (
+                                  <ChevronRight size={12} className="text-slate-400 group-hover/header:text-primary" />
+                                ) : (
+                                  <ChevronDown size={12} className="text-slate-400 group-hover/header:text-primary" />
                                 )}
-                                onClick={e => e.stopPropagation()}
-                              >
-                                <input
-                                  type="checkbox"
-                                  checked={isSelected}
-                                  onChange={(e) => {
-                                    const next = new Set(selectedItemIds)
-                                    if (e.target.checked) next.add(item.id)
-                                    else next.delete(item.id)
-                                    setSelectedItemIds(next)
-                                  }}
-                                  className="sr-only"
-                                />
-                                <div className={cn(
-                                  "w-4 h-4 rounded-md border-1 transition-all duration-300 flex items-center justify-center select-none",
-                                  isSelected
-                                    ? "bg-primary border-primary shadow-lg shadow-primary/40 scale-110"
-                                    : "bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-600 group-hover/checkbox:border-primary group-hover/checkbox:scale-105"
-                                )}>
-                                  {isSelected && (
-                                    <Check size={10} className="text-white animate-in zoom-in fade-in duration-300" strokeWidth={3.5} />
-                                  )}
-                                </div>
-                              </label>
-                            </div>
-                            
-                            {/* TC ID */}
-                            <div className="pl-3 py-2.5">
-                              <span className="text-[10px] font-mono font-bold bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-slate-500 w-fit">
-                                {item.tcId}
+                              </div>
+                              <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex-1">
+                                {folder ? folder.name : 'Unfolderized / Root'}
+                              </span>
+                              <span className="text-[10px] font-medium text-slate-400 bg-slate-200 dark:bg-slate-700 px-1.5 py-0.5 rounded-full">
+                                {items.length}
                               </span>
                             </div>
 
-                            {/* Title */}
-                            <div className="pl-3 py-2.5 min-w-0">
-                              <div className="flex items-center gap-1.5 text-left group min-w-0 w-full">
-                                <span className={cn(
-                                  "text-sm truncate transition-colors font-medium",
-                                  isActive ? "text-primary" : "text-slate-700 dark:text-slate-300 group-hover:text-primary"
-                                )}>
-                                  {item.title}
-                                </span>
-                              </div>
-                            </div>
+                            {/* Group Items */}
+                            {!isCollapsed && items.map(item => {
+                              const cfg = STATUS_CONFIG[item.status] || STATUS_CONFIG['UNTESTED']
+                              const isSelected = selectedItemIds.has(item.id)
+                              const isActive = selectedRunItemId === item.id
 
-                            {/* Status and Notes (combined condition) */}
-                            {!selectedRunItemId && (
-                              <>
-                                {/* Status Selection */}
-                                <div className="px-2 py-2 flex justify-center" onClick={e => e.stopPropagation()}>
-                                  <div className="relative w-[90px]">
-                                    <select
-                                      value={item.status}
-                                      onChange={e =>
-                                        updateRunItem(selectedRun.id, item.id, { status: e.target.value as RunItemStatus })
-                                      }
-                                      className={cn(
-                                        'w-full text-[10px] font-bold uppercase px-2 py-1 rounded-md border focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer appearance-none pr-6 transition-all',
-                                        cfg.bg, cfg.color, cfg.border
-                                      )}
-                                    >
-                                      {ALL_STATUSES.map(s => (
-                                        <option key={s} value={s}>{STATUS_CONFIG[s].label}</option>
-                                      ))}
-                                    </select>
-                                    <ChevronDown size={10} className={cn('absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none opacity-60', cfg?.color || 'text-slate-400')} />
-                                  </div>
-                                </div>
-
-                                {/* Notes inline */}
-                                <div className="px-3 py-2.5 pr-5 flex items-center gap-2" onClick={e => e.stopPropagation()}>
-                                  <div className="relative flex-1 group/note">
-                                    <input
-                                      type="text"
-                                      value={pendingNotes[item.id] !== undefined ? pendingNotes[item.id] : item.notes}
-                                      onChange={e =>
-                                        setPendingNotes(prev => ({ ...prev, [item.id]: e.target.value }))
-                                      }
-                                      placeholder="Add notes..."
-                                      className="text-xs px-3 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 text-slate-700 dark:text-slate-300 w-full transition-all focus:bg-white dark:focus:bg-slate-900 pr-8"
-                                    />
-                                    {pendingNotes[item.id] !== undefined && pendingNotes[item.id] !== item.notes && (
-                                      <button
-                                        onClick={() => {
-                                          updateRunItem(selectedRun.id, item.id, { notes: pendingNotes[item.id] })
-                                          setPendingNotes(prev => {
-                                            const next = { ...prev }
-                                            delete next[item.id]
-                                            return next
-                                          })
-                                          toast.success('Notes saved')
-                                        }}
-                                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-primary hover:bg-primary/10 rounded-md transition-colors animate-in zoom-in duration-200"
-                                        title="Save Notes"
+                              return (
+                                <div 
+                                  key={item.id} 
+                                  onClick={() => setSelectedRunItemId(isActive ? null : item.id)}
+                                  className={cn(
+                                    "border-b border-slate-100 dark:border-slate-800/60 last:border-b-0 transition-all cursor-pointer",
+                                    isSelected && "bg-primary/[0.03] dark:bg-primary/[0.05]",
+                                    isActive && "bg-primary/5 dark:bg-primary/10 border-l-3 border-l-primary"
+                                  )}
+                                >
+                                  {/* Row */}
+                                  <div className={cn(
+                                    "grid gap-0 items-center px-0 py-0 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors",
+                                    selectedRunItemId 
+                                      ? "grid-cols-[48px_80px_1fr]" 
+                                      : "grid-cols-[48px_80px_1fr_125px_160px]"
+                                  )}>
+                                    {/* Checkbox */}
+                                    <div className="h-full flex items-center justify-center self-stretch">
+                                      <label
+                                        className={cn(
+                                          "w-12 self-stretch flex items-center justify-center transition-all cursor-pointer group/checkbox relative",
+                                          isSelected ? "bg-primary/5 dark:bg-primary/10" : "hover:bg-slate-100 dark:hover:bg-slate-800"
+                                        )}
+                                        onClick={e => e.stopPropagation()}
                                       >
-                                        <Check size={14} strokeWidth={3} />
-                                      </button>
+                                        <input
+                                          type="checkbox"
+                                          checked={isSelected}
+                                          onChange={(e) => {
+                                            const next = new Set(selectedItemIds)
+                                            if (e.target.checked) next.add(item.id)
+                                            else next.delete(item.id)
+                                            setSelectedItemIds(next)
+                                          }}
+                                          className="sr-only"
+                                        />
+                                        <div className={cn(
+                                          "w-4 h-4 rounded-md border-1 transition-all duration-300 flex items-center justify-center select-none",
+                                          isSelected
+                                            ? "bg-primary border-primary shadow-lg shadow-primary/40 scale-110"
+                                            : "bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-600 group-hover/checkbox:border-primary group-hover/checkbox:scale-105"
+                                        )}>
+                                          {isSelected && (
+                                            <Check size={10} className="text-white animate-in zoom-in fade-in duration-300" strokeWidth={3.5} />
+                                          )}
+                                        </div>
+                                      </label>
+                                    </div>
+                                    
+                                    {/* TC ID */}
+                                    <div className="pl-3 py-2.5">
+                                      <span className="text-[10px] font-mono font-bold bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-slate-500 w-fit">
+                                        {item.tcId}
+                                      </span>
+                                    </div>
+
+                                    {/* Title */}
+                                    <div className="pl-3 py-2.5 min-w-0">
+                                      <div className="flex items-center gap-1.5 text-left group min-w-0 w-full">
+                                        <span className={cn(
+                                          "text-sm truncate transition-colors font-medium",
+                                          isActive ? "text-primary" : "text-slate-700 dark:text-slate-300 group-hover:text-primary"
+                                        )}>
+                                          {item.title}
+                                        </span>
+                                      </div>
+                                    </div>
+
+                                    {/* Status and Notes (combined condition) */}
+                                    {!selectedRunItemId && (
+                                      <>
+                                        {/* Status Selection */}
+                                        <div className="px-2 py-2 flex justify-center" onClick={e => e.stopPropagation()}>
+                                          <div className="relative w-[90px]">
+                                            <select
+                                              value={item.status}
+                                              onChange={e =>
+                                                updateRunItem(selectedRun.id, item.id, { status: e.target.value as RunItemStatus })
+                                              }
+                                              className={cn(
+                                                'w-full text-[10px] font-bold uppercase px-2 py-1 rounded-md border focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer appearance-none pr-6 transition-all',
+                                                cfg.bg, cfg.color, cfg.border
+                                              )}
+                                            >
+                                              {ALL_STATUSES.map(s => (
+                                                <option key={s} value={s}>{STATUS_CONFIG[s].label}</option>
+                                              ))}
+                                            </select>
+                                            <ChevronDown size={10} className={cn('absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none opacity-60', cfg?.color || 'text-slate-400')} />
+                                          </div>
+                                        </div>
+
+                                        {/* Notes inline */}
+                                        <div className="px-3 py-2.5 pr-5 flex items-center gap-2" onClick={e => e.stopPropagation()}>
+                                          <div className="relative flex-1 group/note">
+                                            <input
+                                              type="text"
+                                              value={pendingNotes[item.id] !== undefined ? pendingNotes[item.id] : item.notes}
+                                              onChange={e =>
+                                                setPendingNotes(prev => ({ ...prev, [item.id]: e.target.value }))
+                                              }
+                                              placeholder="Add notes..."
+                                              className="text-xs px-3 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 text-slate-700 dark:text-slate-300 w-full transition-all focus:bg-white dark:focus:bg-slate-900 pr-8"
+                                            />
+                                            {pendingNotes[item.id] !== undefined && pendingNotes[item.id] !== item.notes && (
+                                              <button
+                                                onClick={() => {
+                                                  updateRunItem(selectedRun.id, item.id, { notes: pendingNotes[item.id] })
+                                                  setPendingNotes(prev => {
+                                                    const next = { ...prev }
+                                                    delete next[item.id]
+                                                    return next
+                                                  })
+                                                  toast.success('Notes saved')
+                                                }}
+                                                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-primary hover:bg-primary/10 rounded-md transition-colors animate-in zoom-in duration-200"
+                                                title="Save Notes"
+                                              >
+                                                <Check size={14} strokeWidth={3} />
+                                              </button>
+                                            )}
+                                          </div>
+                                        </div>
+                                      </>
                                     )}
                                   </div>
                                 </div>
-                              </>
-                            )}
+                              )
+                            })}
                           </div>
-                        </div>
-                      )
-                    })}
+                        )
+                      })
+                    })()}
                   </div>
                 )}
               </div>
 
               {/* Side Detail Panel */}
-              {selectedRunItemId && selectedRun.items.find(i => i.id === selectedRunItemId) && (
-                <div className="flex-1 bg-white dark:bg-surface-card flex flex-col animate-in slide-in-from-right duration-300">
-                  {(() => {
-                    const item = selectedRun.items.find(i => i.id === selectedRunItemId)!
-                    return (
-                      <>
-                        {/* Side panel header */}
-                        <div className="px-5 py-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/10 flex items-center justify-between">
-                          <div className="flex items-center gap-3 min-w-0">
-                            <span className="text-[10px] font-mono font-bold bg-blue-50 dark:bg-blue-500/10 px-2 py-1 rounded text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-500/20 text-nowrap">
-                              {item.tcId}
-                            </span>
-                            <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm truncate">{item.title}</h3>
-                          </div>
-                          <button 
-                            onClick={() => setSelectedRunItemId(null)}
-                            className="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full text-slate-400 transition-colors"
-                          >
-                            <X size={18} />
-                          </button>
+              <div className={cn(
+                "h-full transition-all duration-500 ease-in-out flex flex-col overflow-hidden bg-white dark:bg-surface-card",
+                selectedRunItemId 
+                  ? "flex-1 opacity-100" 
+                  : "flex-[0.00001] opacity-0 pointer-events-none border-transparent"
+              )}>
+                {(() => {
+                  const item = selectedRun.items.find(i => i.id === selectedRunItemId)
+                  if (!item) return null
+                  return (
+                    <div className="flex-1 flex flex-col min-w-0 min-h-0 animate-in fade-in duration-700">
+                      {/* Side panel header */}
+                      <div className="px-5 py-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/10 flex items-center justify-between">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <span className="text-[10px] font-mono font-bold bg-blue-50 dark:bg-blue-500/10 px-2 py-1 rounded text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-500/20 text-nowrap">
+                            {item.tcId}
+                          </span>
+                          <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm truncate">{item.title}</h3>
                         </div>
+                        <button 
+                          onClick={() => setSelectedRunItemId(null)}
+                          className="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full text-slate-400 transition-colors"
+                        >
+                          <X size={18} />
+                        </button>
+                      </div>
 
                         <div className="flex-1 overflow-y-auto p-6 space-y-4 scrollbar-thin">
                           {/* Info Header & Status Area */}
@@ -806,11 +873,10 @@ const TestRunsPage: React.FC = () => {
                             </div>
                           </div>
                         </div>
-                      </>
-                    )
-                  })()}
-                </div>
-              )}
+                    </div>
+                  )
+                })()}
+              </div>
             </div>
 
             {/* Bulk Action Bar */}

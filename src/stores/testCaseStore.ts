@@ -19,6 +19,7 @@ export interface TestRunItem {
   title: string
   section: string
   caseType: string
+  folderId: string | null
   preconditions: string
   steps: string
   expectedResult: string
@@ -237,6 +238,7 @@ export const useTestCaseStore = create<TestManagementState>()(
               title: tc.title,
               section: tc.section,
               caseType: tc.caseType,
+              folderId: tc.folderId,
               preconditions: tc.preconditions,
               steps: tc.steps,
               expectedResult: tc.expectedResult,
@@ -296,6 +298,7 @@ export const useTestCaseStore = create<TestManagementState>()(
                 title: tc.title,
                 section: tc.section,
                 caseType: tc.caseType,
+                folderId: tc.folderId,
                 preconditions: tc.preconditions,
                 steps: tc.steps,
                 expectedResult: tc.expectedResult,

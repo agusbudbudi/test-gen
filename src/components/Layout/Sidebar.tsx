@@ -21,13 +21,28 @@ const Sidebar = () => {
   const { sidebarCollapsed, toggleSidebar, isMobileMenuOpen, setMobileMenuOpen } = useUIStore()
   const { isDarkMode, toggleTheme } = useThemeStore()
 
-  const navItems = [
-    { to: '/generate', icon: FileCheck, label: 'Generate Test Case' },
-    { to: '/review', icon: Bot, label: 'Review Test Case' },
-    { to: '/test-management', icon: Beaker, label: 'Test Management' },
-    { to: '/bug-report', icon: Bug, label: 'Bug Report' },
-    { to: '/history', icon: History, label: 'History' },
-    { to: '/settings', icon: Settings, label: 'Settings' },
+  const navigation = [
+    {
+      group: 'AI Workshop',
+      items: [
+        { to: '/generate', icon: FileCheck, label: 'AI Generate TCs' },
+        { to: '/review', icon: Bot, label: 'AI Review TCs' },
+        { to: '/bug-report', icon: Bug, label: 'AI Bug Report' },
+      ]
+    },
+    {
+      group: 'Execution & Insight',
+      items: [
+        { to: '/test-management', icon: Beaker, label: 'Test Management' },
+        { to: '/history', icon: History, label: 'History' },
+      ]
+    },
+    {
+      group: 'System',
+      items: [
+        { to: '/settings', icon: Settings, label: 'Settings' },
+      ]
+    }
   ]
 
   const closeMobileMenu = () => setMobileMenuOpen(false)
@@ -52,9 +67,9 @@ const Sidebar = () => {
         )}
       >
         {/* Logo and Collapse Toggle */}
-        <div className="p-4 px-3 flex items-center h-[72px] relative">
-          <div className="flex items-center gap-2 px-1">
-            <div className="w-8 h-8 flex-shrink-0 flex items-center justify-center overflow-hidden rounded-lg">
+        <div className="p-2 pb-0 flex items-center h-[64px] relative">
+          <div className="flex items-center gap-0 px-1">
+            <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center overflow-hidden rounded-lg">
               <img 
                 src="/assets/icons/logoTestgen.png" 
                 alt="TestGen Logo" 
@@ -62,7 +77,7 @@ const Sidebar = () => {
               />
             </div>
             {(!sidebarCollapsed || isMobileMenuOpen) && (
-              <span className="font-bold text-lg tracking-tight text-slate-800 dark:text-white">TestGen</span>
+              <span className="font-bold text-2xl tracking-tight text-slate-800 dark:text-white animate-in fade-in slide-in-from-left-2 duration-300">TestGen</span>
             )}
           </div>
           
@@ -78,34 +93,49 @@ const Sidebar = () => {
           </button>
         </div>
 
-        <nav className="flex-1 px-2.5 space-y-0.5">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              onClick={closeMobileMenu}
-              className={({ isActive }) => cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group relative duration-200 mb-2 overflow-hidden",
-                isActive 
-                  ? "bg-primary/15 text-primary dark:text-white dark:bg-primary/25 dark:shadow-[0_0_20px_rgba(99,102,241,0.15)]" 
-                  : "text-slate-700 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-primary/10 hover:text-slate-900 dark:hover:text-slate-200"
+        <nav className="flex-1 px-3 overflow-y-auto py-4 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800">
+          {navigation.map((section, idx) => (
+            <div key={section.group} className={cn(idx !== 0 && (sidebarCollapsed ? "mt-1.5" : "mt-5"))}>
+              {(!sidebarCollapsed || isMobileMenuOpen) ? (
+                <h3 className="px-3 mb-1.5 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.1em] animate-in fade-in duration-500">
+                  {section.group}
+                </h3>
+              ) : (
+                <div className="h-4 flex items-center justify-center">
+                  <div className="w-4 h-[1px] bg-slate-100 dark:bg-slate-800/50" />
+                </div>
               )}
-            >
-              {({ isActive }) => (
-                <>
-                  {isActive && (
-                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-2/3 bg-indigo-500 dark:bg-indigo-400 rounded-r-full shadow-[2px_0_8px_rgba(99,102,241,0.5)]" />
-                  )}
-                  <item.icon size={20} className={cn("flex-shrink-0 transition-transform", isActive && "scale-110")} />
-                  {(!sidebarCollapsed || isMobileMenuOpen) && (
-                    <span className="font-regular text-sm whitespace-nowrap">{item.label}</span>
-                  )}
-                </>
-              )}
-            </NavLink>
+              
+              <div className="space-y-0.5">
+                {section.items.map((item) => (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    onClick={closeMobileMenu}
+                    className={({ isActive }) => cn(
+                      "flex items-center gap-3 px-3 rounded-lg transition-all group relative duration-200 overflow-hidden",
+                      sidebarCollapsed ? "py-2.5" : "py-2",
+                      isActive 
+                        ? "bg-primary/10 text-primary dark:text-primary-foreground dark:bg-primary/20" 
+                        : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-primary/5 hover:text-slate-900 dark:hover:text-slate-200"
+                    )}
+                  >
+                    {({ isActive }) => (
+                      <>
+                        {isActive && (
+                          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-primary rounded-r-full shadow-[0_0_8px_rgba(var(--primary),0.4)]" />
+                        )}
+                        <item.icon size={18} className={cn("flex-shrink-0 transition-all duration-300", isActive ? "scale-105" : "opacity-70 group-hover:opacity-100")} />
+                        {(!sidebarCollapsed || isMobileMenuOpen) && (
+                          <span className="font-medium text-sm whitespace-nowrap animate-in fade-in slide-in-from-left-1 duration-300">{item.label}</span>
+                        )}
+                      </>
+                    )}
+                  </NavLink>
+                ))}
+              </div>
+            </div>
           ))}
-
-
         </nav>
 
         {/* Bottom Actions */}
@@ -115,7 +145,7 @@ const Sidebar = () => {
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-700 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-primary/10 hover:text-slate-900 dark:hover:text-slate-200 transition-all group"
             title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
           >
-            {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+            {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
             {(!sidebarCollapsed || isMobileMenuOpen) && (
               <span className="font-medium text-sm whitespace-nowrap">
                 {isDarkMode ? 'Light Mode' : 'Dark Mode'}
@@ -126,14 +156,14 @@ const Sidebar = () => {
 
         {/* Power by */}
         {(!sidebarCollapsed || isMobileMenuOpen) && (
-          <div className="p-6 flex flex-col items-left gap-2">
-            <span className="text-[8px] text-slate-600 dark:text-slate-500 uppercase tracking-widest font-bold">
+          <div className="p-4 px-6 flex flex-col items-start gap-1.5 border-t border-slate-50 dark:border-border-brand/30">
+            <span className="text-[8px] text-slate-400 dark:text-slate-500 uppercase tracking-widest font-bold opacity-60">
               Assisted by
             </span>
-            <div className="w-16 opacity-60 hover:opacity-100 transition-opacity">
+            <div className="w-12 opacity-30 hover:opacity-100 transition-opacity grayscale hover:grayscale-0">
               <svg 
                 viewBox="0 0 1180 320" 
-                className="w-full h-auto text-slate-500 dark:text-slate-300" 
+                className="w-full h-auto text-slate-400 dark:text-slate-300" 
                 fill="currentColor" 
                 xmlns="http://www.w3.org/2000/svg"
               >
