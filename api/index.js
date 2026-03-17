@@ -258,6 +258,82 @@ app.get("/api/jira/issue/:key", async (req, res) => {
   }
 });
 
+// Proxy endpoint to Search Jira users (to resolve email to accountId)
+app.get("/api/jira/user/search", async (req, res) => {
+  try {
+    const { query, jiraUrl, email, token } = req.query;
+
+    if (!query || !jiraUrl || !email || !token) {
+      return res.status(400).json({ error: "Missing required query params: query, jiraUrl, email, token" });
+    }
+
+    const credentials = Buffer.from(`${email}:${token}`).toString("base64");
+    const baseUrl = String(jiraUrl).replace(/\/$/, "");
+
+    const r = await axios.get(`${baseUrl}/rest/api/3/user/search`, {
+      params: { query },
+      headers: {
+        Authorization: `Basic ${credentials}`,
+        Accept: "application/json",
+      },
+      timeout: 10000,
+    });
+
+    res.status(200).json(r.data);
+  } catch (e) {
+    if (e.response) {
+      return res.status(e.response.status).json({
+        error: "Jira API error",
+        details: e.response.data,
+      });
+    }
+    res.status(500).json({
+      error: "Proxy error",
+      details: String(e && e.message ? e.message : e),
+    });
+  }
+});
+
+// Proxy endpoint to Search Jira issues (used by Release Visibility feature)
+app.get("/api/jira/search", async (req, res) => {
+  try {
+    const { jql, jiraUrl, email, token } = req.query;
+
+    if (!jql || !jiraUrl || !email || !token) {
+      return res.status(400).json({ error: "Missing required query params: jql, jiraUrl, email, token" });
+    }
+
+    const credentials = Buffer.from(`${email}:${token}`).toString("base64");
+    const baseUrl = String(jiraUrl).replace(/\/$/, "");
+
+    const r = await axios.post(`${baseUrl}/rest/api/3/search/jql`, {
+      jql,
+      fields: ["summary", "status", "assignee", "description", "customfield_10020"],
+      maxResults: 50
+    }, {
+      headers: {
+        Authorization: `Basic ${credentials}`,
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      timeout: 20000,
+    });
+
+    res.status(200).json(r.data);
+  } catch (e) {
+    if (e.response) {
+      return res.status(e.response.status).json({
+        error: "Jira API error",
+        details: e.response.data,
+      });
+    }
+    res.status(500).json({
+      error: "Proxy error",
+      details: String(e && e.message ? e.message : e),
+    });
+  }
+});
+
 // Proxy endpoint to create a Confluence page
 app.post("/api/confluence/page", async (req, res) => {
   try {

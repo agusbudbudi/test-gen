@@ -20,6 +20,14 @@ interface ResultState {
   productKnowledgeUrls: string[]
   setProductKnowledgeUrls: (urls: string[]) => void
 
+  // AC Analyzer Results
+  acAnalyzerResult: string | null
+  setAcAnalyzerResult: (result: string | null) => void
+  acAnalyzerUrl: string
+  setAcAnalyzerUrl: (url: string) => void
+  acAnalyzerContext: string
+  setAcAnalyzerContext: (context: string) => void
+
   // Pending Review Transfer
   pendingReviewInput: string | null
   setPendingReviewInput: (input: string | null) => void
@@ -47,6 +55,14 @@ export const useResultStore = create<ResultState>((set) => ({
   productKnowledgeUrls: [''],
   setProductKnowledgeUrls: (urls) => set({ productKnowledgeUrls: urls }),
 
+  // AC Analyzer Results
+  acAnalyzerResult: null,
+  setAcAnalyzerResult: (result) => set({ acAnalyzerResult: result }),
+  acAnalyzerUrl: '',
+  setAcAnalyzerUrl: (url) => set({ acAnalyzerUrl: url }),
+  acAnalyzerContext: '',
+  setAcAnalyzerContext: (context) => set({ acAnalyzerContext: context }),
+
   // Pending Review Transfer
   pendingReviewInput: null,
   setPendingReviewInput: (input) => set({ pendingReviewInput: input }),
@@ -58,6 +74,9 @@ export const useResultStore = create<ResultState>((set) => ({
     bugResult: null, 
     productKnowledgeResult: null,
     productKnowledgeUrls: [''],
+    acAnalyzerResult: null,
+    acAnalyzerUrl: '',
+    acAnalyzerContext: '',
     pendingReviewInput: null 
   }),
 }))

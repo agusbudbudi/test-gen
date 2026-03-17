@@ -1,0 +1,72 @@
+[
+  {
+    "id": "ai-generate-tcs",
+    "title": "AI Generate Test Cases",
+    "description": "Learn how to use AI to generate high-quality test cases from requirements or Jira URLs.",
+    "category": "AI Workshop",
+    "file": "ai-generate-tcs.md"
+  },
+  {
+    "id": "ai-review-tcs",
+    "title": "AI Review Test Cases",
+    "description": "Improve your test cases with AI-driven reviews and automated suggestions.",
+    "category": "AI Workshop",
+    "file": "ai-review-tcs.md"
+  },
+  {
+    "id": "ai-bug-report",
+    "title": "AI Bug Report",
+    "description": "Generate comprehensive, structured bug reports from messy findings or logs.",
+    "category": "AI Workshop",
+    "file": "ai-bug-report.md"
+  },
+  {
+    "id": "ai-ac-analyzer",
+    "title": "AI AC Analyzer",
+    "description": "Get a professional QA assessment and gaps analysis from Jira Acceptance Criteria.",
+    "category": "AI Workshop",
+    "file": "ai-ac-analyzer.md"
+  },
+  {
+    "id": "product-knowledge",
+    "title": "Product Knowledge",
+    "description": "Synthesize multiple Jira tickets into a comprehensive product knowledge base.",
+    "category": "AI Workshop",
+    "file": "product-knowledge.md"
+  },
+  {
+    "id": "release-visibility",
+    "title": "Release Visibility",
+    "description": "Track release progress and detect functional areas using AI.",
+    "category": "Execution & Insight",
+    "file": "release-visibility.md"
+  },
+  {
+    "id": "test-management",
+    "title": "Test Management",
+    "description": "Manage your test cases, folders, and test runs in an integrated suite.",
+    "category": "Execution & Insight",
+    "file": "test-management.md"
+  },
+  {
+    "id": "history",
+    "title": "History",
+    "description": "Review and manage your past AI generation results and prompts.",
+    "category": "Execution & Insight",
+    "file": "history.md"
+  },
+  {
+    "id": "settings",
+    "title": "Settings",
+    "description": "Configure API keys, AI models, and Jira/Confluence integrations.",
+    "category": "System",
+    "file": "settings.md"
+  },
+  {
+    "id": "atlassian-token",
+    "title": "Creating Atlassian API Token",
+    "description": "Step-by-step guide to generate an API token for Jira and Confluence integrations.",
+    "category": "System",
+    "file": "atlassian-api-token.md"
+  }
+]

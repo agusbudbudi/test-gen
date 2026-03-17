@@ -28,6 +28,16 @@ const TestManagementPage = lazy(
 const ProductKnowledgePage = lazy(
   () => import("@/pages/ProductKnowledge/ProductKnowledgePage"),
 );
+const ACAnalyzerPage = lazy(
+  () => import("@/pages/ACAnalyzer/ACAnalyzerPage"),
+);
+const ReleaseVisibilityPage = lazy(
+  () => import("@/pages/ReleaseVisibility/ReleaseVisibilityPage"),
+);
+
+const DocumentationPage = lazy(
+  () => import("@/pages/Documentation/DocumentationPage"),
+);
 
 const App = () => {
   const {
@@ -75,9 +85,20 @@ const App = () => {
                 path="/product-knowledge"
                 element={<ProductKnowledgePage />}
               />
+              <Route
+                path="/ac-analyzer"
+                element={<ACAnalyzerPage />}
+              />
+              <Route
+                path="/release-visibility"
+                element={<ReleaseVisibilityPage />}
+              />
+              <Route path="/documentation" element={<DocumentationPage />} />
+              <Route path="/documentation/:docId" element={<DocumentationPage />} />
               <Route path="*" element={<Navigate to="/generate" replace />} />
             </Route>
           </Routes>
+
         </Suspense>
 
         <ToastContainer />

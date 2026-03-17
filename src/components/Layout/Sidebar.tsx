@@ -13,6 +13,9 @@ import {
   FolderTree,
   Beaker,
   BookOpen,
+  ClipboardList,
+  Table as TableIcon,
+  Lightbulb,
 } from "lucide-react";
 import { useUIStore } from "@/stores/uiStore";
 import { useThemeStore } from "@/stores/themeStore";
@@ -34,6 +37,7 @@ const Sidebar = () => {
         { to: "/generate", icon: FileCheck, label: "AI Generate TCs" },
         { to: "/review", icon: Bot, label: "AI Review TCs" },
         { to: "/bug-report", icon: Bug, label: "AI Bug Report" },
+        { to: "/ac-analyzer", icon: ClipboardList, label: "AI AC Analyzer" },
         {
           to: "/product-knowledge",
           icon: BookOpen,
@@ -44,13 +48,17 @@ const Sidebar = () => {
     {
       group: "Execution & Insight",
       items: [
+        { to: "/release-visibility", icon: TableIcon, label: "Release Visibility" },
         { to: "/test-management", icon: Beaker, label: "Test Management" },
         { to: "/history", icon: History, label: "History" },
       ],
     },
     {
       group: "System",
-      items: [{ to: "/settings", icon: Settings, label: "Settings" }],
+      items: [
+        { to: "/settings", icon: Settings, label: "Settings" },
+        { to: "/documentation", icon: Lightbulb, label: "Documentation" },
+      ],
     },
   ];
 
