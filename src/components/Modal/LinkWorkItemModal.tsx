@@ -1,35 +1,53 @@
-import { useState } from 'react'
-import Modal from './Modal'
-import { Link2, Trash2, Send } from 'lucide-react'
+import { useState } from "react";
+import Modal from "./Modal";
+import { Link2, Trash2, Info } from "lucide-react";
 
 interface LinkWorkItemModalProps {
-  isOpen: boolean
-  onClose: () => void
-  onExport: (linkData: { jiraUrl: string; linkType: string; issueType: string }) => void
-  exporting: boolean
+  isOpen: boolean;
+  onClose: () => void;
+  onExport: (linkData: {
+    jiraUrl: string;
+    linkType: string;
+    issueType: string;
+  }) => void;
+  exporting: boolean;
 }
 
-const LinkWorkItemModal = ({ isOpen, onClose, onExport, exporting }: LinkWorkItemModalProps) => {
-  const [jiraUrl, setJiraUrl] = useState('')
-  const [linkType, setLinkType] = useState('relates to')
-  const [issueType, setIssueType] = useState('Feedback')
+const LinkWorkItemModal = ({
+  isOpen,
+  onClose,
+  onExport,
+  exporting,
+}: LinkWorkItemModalProps) => {
+  const [jiraUrl, setJiraUrl] = useState("");
+  const [linkType, setLinkType] = useState("relates to");
+  const [issueType, setIssueType] = useState("Feedback");
 
   const handleExport = () => {
-    onExport({ jiraUrl: jiraUrl.trim(), linkType, issueType })
-  }
+    onExport({ jiraUrl: jiraUrl.trim(), linkType, issueType });
+  };
 
   const handleClear = () => {
-    setJiraUrl('')
-    setLinkType('relates to')
-    setIssueType('Feedback')
-  }
+    setJiraUrl("");
+    setLinkType("relates to");
+    setIssueType("Feedback");
+  };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Link Work Item" maxWidth="md">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Link Work Item"
+      maxWidth="md"
+    >
       <div className="space-y-6">
-        <p className="text-sm text-slate-500 dark:text-slate-400">
-          Optionally link this feedback to an existing Jira issue by providing its full URL.
-        </p>
+        <div className="flex items-start gap-3 p-3.5 bg-indigo-50/50 dark:bg-indigo-500/5 rounded-xl border border-indigo-100 dark:border-indigo-500/20">
+          <Info size={18} className="text-indigo-500 shrink-0 mt-0.5" />
+          <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+            Optionally link this feedback to an existing Jira issue by providing
+            its full URL.
+          </p>
+        </div>
 
         <div className="space-y-4">
           <div className="space-y-2">
@@ -66,7 +84,10 @@ const LinkWorkItemModal = ({ isOpen, onClose, onExport, exporting }: LinkWorkIte
               Full Jira Link
             </label>
             <div className="relative">
-              <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+              <Link2
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                size={16}
+              />
               <input
                 type="url"
                 placeholder="https://company.atlassian.net/browse/QA-123"
@@ -88,7 +109,7 @@ const LinkWorkItemModal = ({ isOpen, onClose, onExport, exporting }: LinkWorkIte
           >
             Cancel
           </button>
-          
+
           <button
             onClick={handleExport}
             disabled={exporting}
@@ -97,14 +118,18 @@ const LinkWorkItemModal = ({ isOpen, onClose, onExport, exporting }: LinkWorkIte
             {exporting ? (
               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
             ) : (
-              <Send size={16} />
+              <img
+                src="/assets/icons/jira-icon.png"
+                alt="Jira"
+                className="w-4 h-4 object-contain"
+              />
             )}
-            {exporting ? 'Exporting...' : 'Export to Jira'}
+            {exporting ? "Exporting..." : "Export to Jira"}
           </button>
         </div>
       </div>
     </Modal>
-  )
-}
+  );
+};
 
-export default LinkWorkItemModal
+export default LinkWorkItemModal;

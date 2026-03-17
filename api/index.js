@@ -41,6 +41,47 @@ app.post("/api/chat", async (req, res) => {
         .json({ error: "Invalid payload: expected { model, messages, ... }" });
     }
 
+    // Handle streaming
+    if (payload.stream) {
+      console.log('Starting AI stream for model:', payload.model);
+      const r = await axios.post(
+        "https://api.openai.com/v1/chat/completions",
+        payload,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${apiKey}`,
+          },
+          responseType: 'stream',
+          timeout: 60000,
+        }
+      );
+
+      // Set headers for SSE
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
+      res.setHeader('X-Accel-Buffering', 'no'); // Disable buffering in Nginx if any
+      
+      r.data.on('data', (chunk) => {
+        res.write(chunk);
+      });
+
+      r.data.on('end', () => {
+        res.end();
+      });
+
+      r.data.on('error', (err) => {
+        console.error('OpenAI stream error:', err);
+        if (!res.headersSent) {
+          res.status(500).end();
+        } else {
+          res.end();
+        }
+      });
+      return;
+    }
+
     const r = await axios.post(
       "https://api.openai.com/v1/chat/completions",
       payload,
@@ -55,6 +96,11 @@ app.post("/api/chat", async (req, res) => {
 
     res.status(r.status).json(r.data);
   } catch (e) {
+    if (e.response && e.response.data && typeof e.response.data.on === 'function') {
+      // In stream mode, error might be in the stream
+      res.status(500).json({ error: "Stream error" });
+      return;
+    }
     if (e.response) {
       // Forward OpenAI error details if available
       return res.status(e.response.status).json(e.response.data);
@@ -202,6 +248,65 @@ app.get("/api/jira/issue/:key", async (req, res) => {
     if (e.response) {
       return res.status(e.response.status).json({
         error: "Jira API error",
+        details: e.response.data,
+      });
+    }
+    res.status(500).json({
+      error: "Proxy error",
+      details: String(e && e.message ? e.message : e),
+    });
+  }
+});
+
+// Proxy endpoint to create a Confluence page
+app.post("/api/confluence/page", async (req, res) => {
+  try {
+    const { 
+      confluenceUrl, email, token, spaceKey, title, content, parentPageId 
+    } = req.body || {};
+
+    if (!confluenceUrl || !email || !token || !spaceKey || !title || !content) {
+      return res.status(400).json({ error: "Missing required fields: confluenceUrl, email, token, spaceKey, title, content" });
+    }
+
+    const credentials = Buffer.from(`${email}:${token}`).toString("base64");
+    const baseUrl = confluenceUrl.replace(/\/$/, "");
+
+    // Prepare payload for Confluence API (v1)
+    const payload = {
+      type: "page",
+      title: title,
+      space: { key: spaceKey },
+      body: {
+        storage: {
+          value: content, // We expect HTML/XHTML here
+          representation: "storage"
+        }
+      }
+    };
+
+    if (parentPageId) {
+      payload.ancestors = [{ id: parentPageId }];
+    }
+
+    const r = await axios.post(`${baseUrl}/rest/api/content`, payload, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Basic ${credentials}`,
+        Accept: "application/json",
+      },
+      timeout: 15000,
+    });
+
+    res.status(201).json({
+      id: r.data.id,
+      title: r.data.title,
+      url: `${baseUrl}${r.data._links.webui}`,
+    });
+  } catch (e) {
+    if (e.response) {
+      return res.status(e.response.status).json({
+        error: "Confluence API error",
         details: e.response.data,
       });
     }
