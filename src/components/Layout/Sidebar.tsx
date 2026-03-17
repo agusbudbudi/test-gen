@@ -15,6 +15,7 @@ import {
   BookOpen,
   ClipboardList,
   Table as TableIcon,
+  Lightbulb,
 } from "lucide-react";
 import { useUIStore } from "@/stores/uiStore";
 import { useThemeStore } from "@/stores/themeStore";
@@ -54,7 +55,10 @@ const Sidebar = () => {
     },
     {
       group: "System",
-      items: [{ to: "/settings", icon: Settings, label: "Settings" }],
+      items: [
+        { to: "/settings", icon: Settings, label: "Settings" },
+        { to: "/documentation", icon: Lightbulb, label: "Documentation" },
+      ],
     },
   ];
 

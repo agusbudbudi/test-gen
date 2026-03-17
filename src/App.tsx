@@ -35,6 +35,10 @@ const ReleaseVisibilityPage = lazy(
   () => import("@/pages/ReleaseVisibility/ReleaseVisibilityPage"),
 );
 
+const DocumentationPage = lazy(
+  () => import("@/pages/Documentation/DocumentationPage"),
+);
+
 const App = () => {
   const {
     isPromptModalOpen,
@@ -89,9 +93,12 @@ const App = () => {
                 path="/release-visibility"
                 element={<ReleaseVisibilityPage />}
               />
+              <Route path="/documentation" element={<DocumentationPage />} />
+              <Route path="/documentation/:docId" element={<DocumentationPage />} />
               <Route path="*" element={<Navigate to="/generate" replace />} />
             </Route>
           </Routes>
+
         </Suspense>
 
         <ToastContainer />
