@@ -18,7 +18,7 @@ import {
   History as HistoryIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import docsIndex from "@/assets/docs/index.json";
+// import docsIndex from "@/assets/docs/index.json";
 
 interface DocItem {
   id: string;
@@ -40,9 +40,17 @@ const iconMap: Record<string, any> = {
 const DocumentationPage = () => {
   const { docId } = useParams<{ docId: string }>();
   const navigate = useNavigate();
+  const [docsIndex, setDocsIndex] = useState<DocItem[]>([]);
   const [content, setContent] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    fetch("/docs/index.json")
+      .then((res) => res.json())
+      .then((data) => setDocsIndex(data))
+      .catch((err) => console.error("Error loading docs index:", err));
+  }, []);
 
   const filteredDocs = docsIndex.filter(
     (doc) =>
@@ -55,7 +63,7 @@ const DocumentationPage = () => {
   useEffect(() => {
     if (docId && selectedDoc) {
       setLoading(true);
-      fetch(`/src/assets/docs/${selectedDoc.file}`)
+      fetch(`/docs/${selectedDoc.file}`)
         .then((res) => res.text())
         .then((text) => {
           setContent(text);
