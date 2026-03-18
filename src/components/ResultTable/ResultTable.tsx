@@ -4,16 +4,27 @@ import { cn } from '@/lib/utils'
 interface ResultTableProps {
   headers: string[]
   rows: string[][]
+  minWidth?: string
+  compact?: boolean
 }
 
-const ResultTable: React.FC<ResultTableProps> = ({ headers, rows }) => {
+const ResultTable: React.FC<ResultTableProps> = ({ headers, rows, minWidth = '1200px', compact = false }) => {
   return (
     <div className="w-full max-w-full overflow-x-auto rounded-xl border border-slate-200 dark:border-border-brand">
-      <table className="min-w-[1200px] w-full text-sm text-left border-collapse bg-white dark:bg-surface-card">
+      <table 
+        style={{ minWidth: minWidth }}
+        className="w-full text-sm text-left border-collapse bg-white dark:bg-surface-card"
+      >
         <thead className="bg-slate-50 dark:bg-primary/10 text-slate-700 dark:text-slate-200 font-semibold uppercase tracking-wider text-xs">
           <tr>
             {headers.map((header, idx) => (
-              <th key={idx} className="px-6 py-4 border-b border-slate-200 dark:border-border-brand">
+              <th 
+                key={idx} 
+                className={cn(
+                  "border-b border-slate-200 dark:border-border-brand",
+                  compact ? "px-3 py-3" : "px-6 py-4"
+                )}
+              >
                 {header}
               </th>
             ))}
@@ -31,7 +42,10 @@ const ResultTable: React.FC<ResultTableProps> = ({ headers, rows }) => {
                 return (
                   <td 
                     key={cellIdx} 
-                    className="px-6 py-4 text-slate-600 dark:text-slate-300 align-top"
+                    className={cn(
+                      "text-slate-600 dark:text-slate-300 align-top",
+                      compact ? "px-3 py-3" : "px-6 py-4"
+                    )}
                   >
                     {isStatus ? (
                       <span className={cn(

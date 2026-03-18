@@ -116,7 +116,7 @@ const SettingsPage = () => {
     { id: "general", label: "General", icon: <Key size={16} /> },
     {
       id: "jira",
-      label: "Jira Integration",
+      label: "Jira",
       icon: (
         <img
           src="/assets/icons/jira-icon.png"

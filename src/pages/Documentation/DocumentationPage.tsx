@@ -16,6 +16,9 @@ import {
   Table as TableIcon,
   Beaker,
   History as HistoryIcon,
+  Settings,
+  Key,
+  Layers,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 // import docsIndex from "@/assets/docs/index.json";
@@ -35,6 +38,10 @@ const iconMap: Record<string, any> = {
   "ai-ac-analyzer": ClipboardList,
   "product-knowledge": BookOpen,
   "release-visibility": TableIcon,
+  "test-management": Layers,
+  "history": HistoryIcon,
+  "settings": Settings,
+  "atlassian-token": Key,
 };
 
 const DocumentationPage = () => {
@@ -79,35 +86,57 @@ const DocumentationPage = () => {
     }
   }, [docId, selectedDoc]);
 
-  const renderDocList = () => (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {filteredDocs.map((doc) => {
-        const Icon = iconMap[doc.id] || Book;
-        return (
-          <Link
-            key={doc.id}
-            to={`/documentation/${doc.id}`}
-            className="group p-6 bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-brand rounded-2xl hover:border-primary/50 dark:hover:border-primary/50 transition-all hover:shadow-lg hover:shadow-primary/5 flex flex-col gap-4"
+  const renderDocList = () => {
+    if (filteredDocs.length === 0 && searchQuery) {
+      return (
+        <div className="flex flex-col items-center justify-center py-20 text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="w-16 h-16 bg-slate-100 dark:bg-surface-dark rounded-full flex items-center justify-center text-slate-400 mb-4 border border-slate-200 dark:border-border-brand">
+            <Search size={32} strokeWidth={1.5} />
+          </div>
+          <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-2">
+            No results found
+          </h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400 max-w-xs mb-6">
+            We couldn't find any guides matching "
+            <span className="font-semibold text-primary">{searchQuery}</span>"
+          </p>
+          <button
+            onClick={() => setSearchQuery("")}
+            className="px-4 py-2 bg-primary/10 text-primary hover:bg-primary/20 rounded-xl text-sm font-bold transition-all"
           >
-            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
-              <Icon size={24} />
-            </div>
-            <div>
-              <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-2 group-hover:text-primary transition-colors">
-                {doc.title}
-              </h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2">
-                {doc.description}
-              </p>
-            </div>
-            <div className="mt-auto pt-2 flex items-center text-xs font-semibold text-primary uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity">
-              View Guide <ChevronRight size={14} className="ml-1" />
-            </div>
-          </Link>
-        );
-      })}
-    </div>
-  );
+            Clear Search
+          </button>
+        </div>
+      );
+    }
+
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        {filteredDocs.map((doc) => {
+          const Icon = iconMap[doc.id] || Book;
+          return (
+            <Link
+              key={doc.id}
+              to={`/documentation/${doc.id}`}
+              className="group p-4 bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-brand rounded-xl hover:border-primary/50 dark:hover:border-primary/50 transition-all hover:shadow-lg hover:shadow-primary/5 flex flex-col gap-3"
+            >
+              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform shrink-0">
+                <Icon size={20} />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-800 dark:text-white mb-1 group-hover:text-primary transition-colors line-clamp-1">
+                  {doc.title}
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                  {doc.description}
+                </p>
+              </div>
+            </Link>
+          );
+        })}
+      </div>
+    );
+  };
 
   return (
     <div className="flex flex-col h-full bg-slate-50/50 dark:bg-transparent -mt-4 -mx-4 lg:-mx-6">
@@ -208,6 +237,12 @@ const DocumentationPage = () => {
                     ),
                     li: ({ node, ...props }) => (
                       <li className="pl-1" {...props} />
+                    ),
+                    a: ({ node, ...props }) => (
+                      <a
+                        className="text-blue-600 dark:text-blue-400 font-medium hover:underline transition-colors"
+                        {...props}
+                      />
                     ),
                     code: ({ node, className, children, ...props }) => {
                       const match = /language-(\w+)/.exec(className || "");

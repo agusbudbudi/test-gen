@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Search,
   Table as TableIcon,
@@ -11,25 +11,92 @@ import {
   Copy,
   Check,
   Sparkles,
+  Edit2,
+  Save,
+  X,
 } from "lucide-react";
-import { useReleaseVisibility } from "@/hooks/useReleaseVisibility";
+import { useReleaseVisibility, Ticket } from "@/hooks/useReleaseVisibility";
 import { cn } from "@/lib/utils";
+
+const COMMON_STATUSES = [
+  "To Do",
+  "In Progress",
+  "In Review",
+  "Ready to Test",
+  "Ready to Deploy",
+  "Done",
+];
 
 const ReleaseVisibilityPage = () => {
   const [sprint, setSprint] = useState("");
   const [assignee, setAssignee] = useState("");
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([
+    "Ready to Deploy",
+  ]);
   const [copySuccess, setCopySuccess] = useState(false);
-  const { queryTickets, tickets, loading } = useReleaseVisibility();
+  const [editingKey, setEditingKey] = useState<string | null>(null);
+  const [editData, setEditData] = useState<{ area: string; demoFlow: string }>({
+    area: "",
+    demoFlow: "",
+  });
+
+  const { queryTickets, tickets, loading, updateTicket, refreshTicketAI } =
+    useReleaseVisibility();
+
+  // Load from localStorage
+  useEffect(() => {
+    const savedSprint = localStorage.getItem("rv_sprint");
+    const savedAssignee = localStorage.getItem("rv_assignee");
+    const savedStatuses = localStorage.getItem("rv_statuses");
+
+    if (savedSprint) setSprint(savedSprint);
+    if (savedAssignee) setAssignee(savedAssignee);
+    if (savedStatuses) {
+      try {
+        setSelectedStatuses(JSON.parse(savedStatuses));
+      } catch (e) {
+        console.error("Failed to parse saved statuses", e);
+      }
+    }
+  }, []);
+
+  // Save to localStorage
+  useEffect(() => {
+    localStorage.setItem("rv_sprint", sprint);
+    localStorage.setItem("rv_assignee", assignee);
+    localStorage.setItem("rv_statuses", JSON.stringify(selectedStatuses));
+  }, [sprint, assignee, selectedStatuses]);
 
   const handleQuery = () => {
-    queryTickets(sprint, assignee);
+    queryTickets(sprint, assignee, selectedStatuses);
+  };
+
+  const toggleStatus = (status: string) => {
+    setSelectedStatuses((prev) =>
+      prev.includes(status)
+        ? prev.filter((s) => s !== status)
+        : [...prev, status],
+    );
+  };
+
+  const startEditing = (ticket: Ticket) => {
+    setEditingKey(ticket.key);
+    setEditData({ area: ticket.area, demoFlow: ticket.demoFlow });
+  };
+
+  const saveEdit = (key: string) => {
+    updateTicket(key, editData);
+    setEditingKey(null);
+  };
+
+  const cancelEdit = () => {
+    setEditingKey(null);
   };
 
   const handleCopy = () => {
     if (tickets.length === 0) return;
 
     // Format content as tab-separated values (TSV) for spreadsheets
-    // Grouped by assignee
     const grouped = tickets.reduce(
       (acc, ticket) => {
         const group = ticket.assignee || "Unassigned";
@@ -42,7 +109,7 @@ const ReleaseVisibilityPage = () => {
 
     const content = Object.entries(grouped)
       .map(([assigneeName, groupTickets]) => {
-        const headerRow = `Assignee: ${assigneeName}\t\t\t\t`; // Column headers placeholder
+        const headerRow = `Assignee: ${assigneeName}\t\t\t\t`;
         const rows = groupTickets.map((t) => {
           const escape = (val: string) => `"${val.replace(/"/g, '""')}"`;
           const formattedDemoFlow = t.demoFlow
@@ -73,53 +140,85 @@ const ReleaseVisibilityPage = () => {
           Release Visibility
         </h1>
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-          Query tickets ready to deploy from current sprint with AI-powered area
-          detection.
+          Query tickets ready to deploy with AI-powered analysis and manual
+          overrides.
         </p>
       </div>
 
       {/* Query Filters */}
       <div className="bg-white dark:bg-surface-card border border-slate-200 dark:border-border-brand rounded-2xl p-6 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent pointer-events-none" />
-        <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
+        <div className="relative z-10 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-primary dark:text-primary-foreground uppercase tracking-widest px-1 flex items-center gap-2">
+                <Calendar size={14} />
+                Sprint Name / ID
+              </label>
+              <input
+                type="text"
+                value={sprint}
+                onChange={(e) => setSprint(e.target.value)}
+                placeholder="e.g. 2026-1"
+                className="w-full px-4 py-2.5 bg-slate-50 dark:bg-surface-dark border border-slate-200 dark:border-border-brand rounded-xl focus:ring-2 focus:ring-primary/50 outline-none transition-all text-sm text-slate-900 dark:text-white placeholder:text-slate-400"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-primary dark:text-primary-foreground uppercase tracking-widest px-1 flex items-center gap-2">
+                <User size={14} />
+                Assigned Email / Name
+              </label>
+              <input
+                type="text"
+                value={assignee}
+                onChange={(e) => setAssignee(e.target.value)}
+                placeholder="e.g. user1@test.com, user2@test.com"
+                className="w-full px-4 py-2.5 bg-slate-50 dark:bg-surface-dark border border-slate-200 dark:border-border-brand rounded-xl focus:ring-2 focus:ring-primary/50 outline-none transition-all text-sm text-slate-900 dark:text-white placeholder:text-slate-400"
+              />
+            </div>
+          </div>
+
           <div className="space-y-2">
             <label className="text-[10px] font-bold text-primary dark:text-primary-foreground uppercase tracking-widest px-1 flex items-center gap-2">
-              <Calendar size={14} />
-              Sprint Name / ID
+              <TableIcon size={14} />
+              Statuses
             </label>
-            <input
-              type="text"
-              value={sprint}
-              onChange={(e) => setSprint(e.target.value)}
-              placeholder="e.g. 2026-1"
-              className="w-full px-4 py-2.5 bg-slate-50 dark:bg-surface-dark border border-slate-200 dark:border-border-brand rounded-xl focus:ring-2 focus:ring-primary/50 outline-none transition-all text-sm text-slate-900 dark:text-white placeholder:text-slate-400"
-            />
+            <div className="flex flex-wrap gap-2">
+              {COMMON_STATUSES.map((status) => (
+                <button
+                  key={status}
+                  onClick={() => toggleStatus(status)}
+                  className={cn(
+                    "px-3 py-1 rounded-lg text-xs font-bold transition-all border",
+                    selectedStatuses.includes(status)
+                      ? "bg-primary border-primary text-white dark:text-sidebar-bg"
+                      : "bg-slate-50 dark:bg-surface-dark border-slate-200 dark:border-border-brand text-slate-500 hover:border-primary/50",
+                  )}
+                >
+                  {status}
+                </button>
+              ))}
+            </div>
           </div>
-          <div className="space-y-2">
-            <label className="text-[10px] font-bold text-primary dark:text-primary-foreground uppercase tracking-widest px-1 flex items-center gap-2">
-              <User size={14} />
-              Assigned Email
-            </label>
-            <input
-              type="email"
-              value={assignee}
-              onChange={(e) => setAssignee(e.target.value)}
-              placeholder="e.g. user1@test.com, user2@test.com"
-              className="w-full px-4 py-2.5 bg-slate-50 dark:bg-surface-dark border border-slate-200 dark:border-border-brand rounded-xl focus:ring-2 focus:ring-primary/50 outline-none transition-all text-sm text-slate-900 dark:text-white placeholder:text-slate-400"
-            />
+
+          <div className="flex justify-end pt-2">
+            <button
+              onClick={handleQuery}
+              disabled={
+                loading || !sprint || !assignee || selectedStatuses.length === 0
+              }
+              className="h-[42px] px-8 bg-primary hover:bg-primary/90 text-white dark:text-sidebar-bg rounded-xl font-bold shadow-lg shadow-primary/20 flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+            >
+              {loading ? (
+                <RefreshCw size={18} className="animate-spin" />
+              ) : (
+                <Search size={18} />
+              )}
+              <span>
+                {loading ? "Querying & Analyzing..." : "Search Tickets"}
+              </span>
+            </button>
           </div>
-          <button
-            onClick={handleQuery}
-            disabled={loading || !sprint || !assignee}
-            className="h-[42px] px-6 bg-primary hover:bg-primary/90 text-white dark:text-sidebar-bg rounded-xl font-bold shadow-lg shadow-primary/20 flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed text-sm"
-          >
-            {loading ? (
-              <RefreshCw size={18} className="animate-spin" />
-            ) : (
-              <Search size={18} />
-            )}
-            <span>{loading ? "Querying..." : "Search Tickets"}</span>
-          </button>
         </div>
       </div>
 
@@ -129,7 +228,7 @@ const ReleaseVisibilityPage = () => {
           <div className="flex items-center gap-2">
             <TableIcon size={18} className="text-slate-400" />
             <h3 className="font-semibold text-slate-800 dark:text-white text-sm">
-              Tickets Ready to Deploy
+              Tickets List
             </h3>
             {tickets.length > 0 && (
               <span className="px-2 py-0.5 bg-primary/10 text-primary dark:text-primary-foreground rounded-full text-[10px] font-bold">
@@ -137,7 +236,7 @@ const ReleaseVisibilityPage = () => {
               </span>
             )}
           </div>
-          
+
           {tickets.length > 0 && (
             <button
               onClick={handleCopy}
@@ -168,9 +267,7 @@ const ReleaseVisibilityPage = () => {
                 <th className="px-6 py-4 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
                   <div className="flex items-center gap-2">
                     Detect Area
-                    <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-primary/10 text-primary dark:text-primary-foreground text-[8px] font-black tracking-normal border border-primary/20">
-                      <Sparkles size={8} /> AI SUGGESTIONS
-                    </span>
+                    <Sparkles size={10} className="text-primary" />
                   </div>
                 </th>
                 <th className="px-6 py-4 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
@@ -178,18 +275,19 @@ const ReleaseVisibilityPage = () => {
                 </th>
                 <th className="px-6 py-4 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
                   <div className="flex items-center gap-2">
-                    Suggestions Demo Flow
-                    <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-primary/10 text-primary dark:text-primary-foreground text-[8px] font-black tracking-normal border border-primary/20">
-                      <Sparkles size={8} /> AI SUGGESTIONS
-                    </span>
+                    Demo Flow
+                    <Sparkles size={10} className="text-primary" />
                   </div>
+                </th>
+                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest text-right">
+                  Actions
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50 dark:divide-border-brand/30">
-              {loading && (
+              {loading && tickets.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-6 py-20 text-center">
+                  <td colSpan={6} className="px-6 py-20 text-center">
                     <div className="flex flex-col items-center gap-3">
                       <RefreshCw
                         size={32}
@@ -206,91 +304,106 @@ const ReleaseVisibilityPage = () => {
               {!loading && tickets.length === 0 && (
                 <tr>
                   <td
-                    colSpan={5}
+                    colSpan={6}
                     className="px-6 py-20 text-center text-slate-400"
                   >
                     <div className="flex flex-col items-center gap-3 opacity-40">
                       <Box size={48} />
-                      <p className="text-sm font-medium">
-                        No tickets found. Enter query details above.
-                      </p>
+                      <p className="text-sm font-medium">No tickets found.</p>
                     </div>
                   </td>
                 </tr>
               )}
 
-              {!loading &&
-                Object.entries(
-                  tickets.reduce(
-                    (acc, ticket) => {
-                      const group = ticket.assignee || "Unassigned";
-                      if (!acc[group]) acc[group] = [];
-                      acc[group].push(ticket);
-                      return acc;
-                    },
-                    {} as Record<string, typeof tickets>,
-                  ),
-                ).map(([groupName, groupTickets]) => (
-                  <React.Fragment key={groupName}>
-                    {/* Group Header */}
-                    <tr className="bg-slate-100/30 dark:bg-surface-dark/30 border-y border-slate-100 dark:border-border-brand">
-                      <td colSpan={5} className="px-6 py-2">
-                        <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-bold uppercase shrink-0">
-                            {groupName.charAt(0)}
-                          </div>
-                          <span className="text-xs text-slate-600 dark:text-slate-300">
-                            Assignee:{" "}
-                            <span className="text-xs font-bold text-slate-600 dark:text-slate-300">
-                              {groupName}
-                            </span>
-                          </span>
-                          <span className="text-[10px] px-1.5 py-0.5 bg-slate-200 dark:bg-sidebar-bg text-slate-500 dark:text-slate-400 rounded-md font-bold">
-                            {groupTickets.length} tickets
-                          </span>
+              {Object.entries(
+                tickets.reduce(
+                  (acc, ticket) => {
+                    const group = ticket.assignee || "Unassigned";
+                    if (!acc[group]) acc[group] = [];
+                    acc[group].push(ticket);
+                    return acc;
+                  },
+                  {} as Record<string, typeof tickets>,
+                ),
+              ).map(([groupName, groupTickets]) => (
+                <React.Fragment key={groupName}>
+                  <tr className="bg-slate-100/30 dark:bg-surface-dark/30 border-y border-slate-100 dark:border-border-brand">
+                    <td colSpan={6} className="px-6 py-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-bold uppercase shrink-0">
+                          {groupName.charAt(0)}
+                        </div>
+                        <span className="text-xs font-bold text-slate-600 dark:text-slate-300">
+                          {groupName}
+                        </span>
+                        <span className="text-[10px] px-1.5 py-0.5 bg-slate-200 dark:bg-sidebar-bg text-slate-500 dark:text-slate-400 rounded-md font-bold">
+                          {groupTickets.length} tickets
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+                  {groupTickets.map((ticket) => (
+                    <tr
+                      key={ticket.key}
+                      className="hover:bg-slate-50/50 dark:hover:bg-primary/5 transition-colors group"
+                    >
+                      <td className="px-6 py-4">
+                        <a
+                          href={ticket.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 text-primary font-bold hover:underline text-xs whitespace-nowrap"
+                        >
+                          {ticket.key}
+                          <ExternalLink
+                            size={12}
+                            className="opacity-0 group-hover:opacity-100 transition-opacity"
+                          />
+                        </a>
+                      </td>
+                      <td className="px-6 py-4 max-w-xs">
+                        <div
+                          className="text-sm text-slate-700 dark:text-slate-200 font-medium whitespace-normal"
+                          title={ticket.title}
+                        >
+                          {ticket.title}
                         </div>
                       </td>
-                    </tr>
-                    {/* Group Items */}
-                    {groupTickets.map((ticket) => (
-                      <tr
-                        key={ticket.key}
-                        className="hover:bg-slate-50/50 dark:hover:bg-primary/5 transition-colors group"
-                      >
-                        <td className="px-6 py-4">
-                          <a
-                            href={ticket.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 text-primary font-bold hover:underline text-xs whitespace-nowrap"
-                          >
-                            {ticket.key}
-                            <ExternalLink
-                              size={12}
-                              className="opacity-0 group-hover:opacity-100 transition-opacity"
-                            />
-                          </a>
-                        </td>
-                        <td className="px-6 py-4 max-w-xs xl:max-w-md">
-                          <div
-                            className="text-sm text-slate-700 dark:text-slate-200 font-medium whitespace-normal"
-                            title={ticket.title}
-                          >
-                            {ticket.title}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
+                      <td className="px-6 py-4">
+                        {editingKey === ticket.key ? (
+                          <input
+                            type="text"
+                            value={editData.area}
+                            onChange={(e) =>
+                              setEditData({ ...editData, area: e.target.value })
+                            }
+                            className="w-full px-2 py-1 text-xs bg-white dark:bg-surface-dark border border-primary/50 rounded outline-none"
+                          />
+                        ) : (
                           <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 text-xs font-bold border border-purple-500/20 whitespace-nowrap">
                             <Layers size={12} />
                             {ticket.area}
                           </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="inline-flex px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[11px] font-bold border border-emerald-500/20 whitespace-nowrap">
-                            {ticket.status}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 min-w-[250px]">
+                        )}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="inline-flex px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[11px] font-bold border border-emerald-500/20 whitespace-nowrap">
+                          {ticket.status}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 min-w-[250px]">
+                        {editingKey === ticket.key ? (
+                          <textarea
+                            value={editData.demoFlow}
+                            onChange={(e) =>
+                              setEditData({
+                                ...editData,
+                                demoFlow: e.target.value,
+                              })
+                            }
+                            className="w-full h-24 px-2 py-1 text-xs bg-white dark:bg-surface-dark border border-primary/50 rounded outline-none resize-none"
+                          />
+                        ) : (
                           <div className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed bg-slate-50 dark:bg-surface-dark/50 p-3 rounded-lg">
                             {ticket.demoFlow.split("\n").map((line, i) => (
                               <div
@@ -304,103 +417,201 @@ const ReleaseVisibilityPage = () => {
                               </div>
                             ))}
                           </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </React.Fragment>
-                ))}
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          {editingKey === ticket.key ? (
+                            <>
+                              <button
+                                onClick={() => saveEdit(ticket.key)}
+                                className="p-1.5 text-emerald-500 hover:bg-emerald-500/10 rounded-md transition-all"
+                                title="Save"
+                              >
+                                <Save size={16} />
+                              </button>
+                              <button
+                                onClick={cancelEdit}
+                                className="p-1.5 text-rose-500 hover:bg-rose-500/10 rounded-md transition-all"
+                                title="Cancel"
+                              >
+                                <X size={16} />
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                onClick={() => refreshTicketAI(ticket)}
+                                className="p-1.5 text-primary hover:bg-primary/10 rounded-md transition-all"
+                                title="Re-run AI Analysis"
+                              >
+                                <RefreshCw size={16} />
+                              </button>
+                              <button
+                                onClick={() => startEditing(ticket)}
+                                className="p-1.5 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-md transition-all"
+                                title="Edit Manually"
+                              >
+                                <Edit2 size={16} />
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </React.Fragment>
+              ))}
             </tbody>
           </table>
         </div>
 
         {/* Mobile Card View */}
         <div className="lg:hidden divide-y divide-slate-100 dark:divide-border-brand/30">
-          {loading && (
+          {loading && tickets.length === 0 && (
             <div className="px-6 py-20 text-center">
-              <div className="flex flex-col items-center gap-3">
-                <RefreshCw size={32} className="text-primary/40 animate-spin" />
-                <p className="text-sm text-slate-400 animate-pulse font-medium">
-                  Analyzing tickets for mobile...
-                </p>
-              </div>
+              <RefreshCw
+                size={32}
+                className="text-primary/40 animate-spin mx-auto mb-3"
+              />
+              <p className="text-sm text-slate-400">Analyzing tickets...</p>
             </div>
           )}
 
-          {!loading && tickets.length === 0 && (
-            <div className="px-6 py-20 text-center text-slate-400">
-              <div className="flex flex-col items-center gap-3 opacity-40">
-                <Box size={48} />
-                <p className="text-sm font-medium">No tickets found.</p>
-              </div>
+          {tickets.length === 0 && !loading && (
+            <div className="px-6 py-20 text-center text-slate-400 opacity-40">
+              <Box size={48} className="mx-auto mb-3" />
+              <p className="text-sm">No tickets found.</p>
             </div>
           )}
 
-          {!loading &&
-            Object.entries(
-              tickets.reduce(
-                (acc, ticket) => {
-                  const group = ticket.assignee || "Unassigned";
-                  if (!acc[group]) acc[group] = [];
-                  acc[group].push(ticket);
-                  return acc;
-                },
-                {} as Record<string, typeof tickets>,
-              ),
-            ).map(([groupName, groupTickets]) => (
-              <div key={groupName} className="flex flex-col">
-                <div className="px-4 py-2 bg-slate-50/80 dark:bg-sidebar-bg/50 border-y border-slate-100 dark:border-border-brand flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-bold uppercase">
-                      {groupName.charAt(0)}
-                    </div>
-                    <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
-                      {groupName}
-                    </span>
+          {Object.entries(
+            tickets.reduce(
+              (acc, ticket) => {
+                const group = ticket.assignee || "Unassigned";
+                if (!acc[group]) acc[group] = [];
+                acc[group].push(ticket);
+                return acc;
+              },
+              {} as Record<string, typeof tickets>,
+            ),
+          ).map(([groupName, groupTickets]) => (
+            <div key={groupName} className="flex flex-col">
+              <div className="px-4 py-2 bg-slate-50/80 dark:bg-sidebar-bg/50 border-y border-slate-100 dark:border-border-brand flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-bold uppercase">
+                    {groupName.charAt(0)}
                   </div>
-                  <span className="text-[10px] font-bold text-slate-400">
-                    {groupTickets.length}
+                  <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
+                    {groupName}
                   </span>
                 </div>
-                {groupTickets.map((ticket) => (
-                  <div key={ticket.key} className="p-4 space-y-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <a
-                        href={ticket.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary font-bold text-xs hover:underline flex items-center gap-1"
-                      >
-                        {ticket.key} <ExternalLink size={10} />
-                      </a>
+                <span className="text-[10px] font-bold text-slate-400">
+                  {groupTickets.length}
+                </span>
+              </div>
+              {groupTickets.map((ticket) => (
+                <div key={ticket.key} className="p-4 space-y-3 relative group">
+                  <div className="flex items-start justify-between gap-2">
+                    <a
+                      href={ticket.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary font-bold text-xs hover:underline flex items-center gap-1"
+                    >
+                      {ticket.key} <ExternalLink size={10} />
+                    </a>
+                    <div className="flex items-center gap-2">
                       <div className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold border border-emerald-500/10">
                         {ticket.status}
                       </div>
-                    </div>
-                    <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-100 leading-snug">
-                      {ticket.title}
-                    </h4>
-                    <div className="flex flex-wrap gap-2">
-                      <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[10px] font-bold border border-purple-500/10">
-                        <Layers size={10} /> {ticket.area}
-                      </div>
-                    </div>
-                    <div className="bg-slate-50 dark:bg-surface-dark/40 p-3 rounded-xl border border-slate-100 dark:border-border-brand/30">
-                      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter mb-2 flex items-center gap-1.5">
-                        <Sparkles size={10} className="text-primary" /> Suggetion Demo Flow
-                      </div>
-                      <div className="space-y-1.5">
-                        {ticket.demoFlow.split("\n").map((line, i) => (
-                          <div key={i} className="flex gap-2 text-[11px] text-slate-600 dark:text-slate-300 leading-normal">
-                            <span className="text-primary font-bold shrink-0">•</span>
-                            <span>{line.replace(/^[#*-]\s*/, "")}</span>
-                          </div>
-                        ))}
-                      </div>
+                      <button
+                        onClick={() => refreshTicketAI(ticket)}
+                        className="p-1 text-primary hover:bg-primary/10 rounded"
+                      >
+                        <RefreshCw size={12} />
+                      </button>
                     </div>
                   </div>
-                ))}
-              </div>
-            ))}
+                  <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-100 leading-snug">
+                    {ticket.title}
+                  </h4>
+
+                  <div className="space-y-2">
+                    {editingKey === ticket.key ? (
+                      <div className="space-y-2">
+                        <input
+                          type="text"
+                          value={editData.area}
+                          onChange={(e) =>
+                            setEditData({ ...editData, area: e.target.value })
+                          }
+                          className="w-full px-2 py-1 text-[11px] bg-white dark:bg-surface-dark border border-primary/50 rounded"
+                        />
+                        <textarea
+                          value={editData.demoFlow}
+                          onChange={(e) =>
+                            setEditData({
+                              ...editData,
+                              demoFlow: e.target.value,
+                            })
+                          }
+                          className="w-full h-24 px-2 py-1 text-[11px] bg-white dark:bg-surface-dark border border-primary/50 rounded"
+                        />
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => saveEdit(ticket.key)}
+                            className="flex-1 py-1.5 bg-emerald-500 text-white rounded-md text-[10px] font-bold"
+                          >
+                            Save
+                          </button>
+                          <button
+                            onClick={cancelEdit}
+                            className="flex-1 py-1.5 bg-slate-200 dark:bg-surface-dark rounded-md text-[10px] font-bold"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex items-center justify-between">
+                          <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[10px] font-bold border border-purple-500/10">
+                            <Layers size={10} /> {ticket.area}
+                          </div>
+                          <button
+                            onClick={() => startEditing(ticket)}
+                            className="p-1 text-slate-400 hover:text-primary"
+                          >
+                            <Edit2 size={12} />
+                          </button>
+                        </div>
+                        <div className="bg-slate-50 dark:bg-surface-dark/40 p-3 rounded-xl border border-slate-100 dark:border-border-brand/30">
+                          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter mb-2 flex items-center gap-1.5">
+                            <Sparkles size={10} className="text-primary" /> Demo
+                            Flow
+                          </div>
+                          <div className="space-y-1.5">
+                            {ticket.demoFlow.split("\n").map((line, i) => (
+                              <div
+                                key={i}
+                                className="flex gap-2 text-[11px] text-slate-600 dark:text-slate-300 leading-normal"
+                              >
+                                <span className="text-primary font-bold shrink-0">
+                                  •
+                                </span>
+                                <span>{line.replace(/^[#*-]\s*/, "")}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ))}
         </div>
       </div>
     </div>
