@@ -147,16 +147,16 @@ const ReviewPage = () => {
           onChange={(e) => setTestCaseInput(e.target.value)}
         />
 
-        <div className="flex flex-wrap justify-between items-center gap-4">
-          <div className="flex gap-3">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
             <button
               onClick={() => setTestCaseInput('')}
-              className="flex items-center gap-2 px-4 py-2 text-slate-500 hover:text-red-500 transition-colors text-sm font-medium hover-scale"
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-slate-100 hover:bg-red-50 dark:bg-slate-800 dark:hover:bg-red-900/20 text-slate-600 hover:text-red-500 rounded-xl transition-all text-sm font-medium hover-scale w-full sm:w-auto border border-transparent hover:border-red-200 dark:hover:border-red-900/50"
             >
               <Trash2 size={16} />
               Clear Input
             </button>
-            <label className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl text-sm font-semibold hover:bg-slate-200 dark:hover:bg-slate-700 transition-all cursor-pointer hover-scale">
+            <label className="flex items-center justify-center gap-2 px-4 py-2 bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-brand text-slate-700 dark:text-slate-300 rounded-xl text-sm font-semibold hover:border-primary dark:hover:border-primary transition-all cursor-pointer hover-scale w-full sm:w-auto">
               <Upload size={16} />
               Upload File (Excel/CSV)
               <input type="file" accept=".xlsx,.xls,.csv,.tsv" className="hidden" onChange={handleFileUpload} />
@@ -166,7 +166,7 @@ const ReviewPage = () => {
           <button
             onClick={handleReview}
             disabled={loading}
-            className="flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary-hover text-white font-semibold text-sm rounded-xl transition-all shadow-[0_8px_16px_-4px_rgba(var(--color-primary-rgb),0.2)] disabled:opacity-70 disabled:cursor-not-allowed hover-scale"
+            className="flex items-center justify-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary-hover text-white font-semibold text-sm rounded-xl transition-all shadow-[0_8px_16px_-4px_rgba(var(--color-primary-rgb),0.2)] disabled:opacity-70 disabled:cursor-not-allowed hover-scale w-full sm:w-auto"
           >
             {loading ? (
               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -250,33 +250,33 @@ const ReviewPage = () => {
                   </h3>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+                <div className="flex items-center gap-2 w-full sm:w-auto mt-2 sm:mt-0 overflow-x-auto pb-1 sm:pb-0">
+                  <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl min-w-max">
                     <button 
                       onClick={handleSaveToHistory}
-                      className="p-2 text-slate-500 hover:text-primary hover:bg-white dark:hover:bg-slate-700 rounded-lg transition-all flex items-center gap-2 text-xs font-bold"
+                      className="p-2 text-slate-500 hover:text-primary hover:bg-white dark:hover:bg-slate-700 rounded-lg transition-all flex items-center gap-1.5 text-xs font-bold"
                       title="Save to History"
                     >
                       <HistoryIcon size={14} />
-                      Save
+                      <span>Save</span>
                     </button>
                     <div className="w-px h-4 bg-slate-200 dark:bg-slate-700 self-center mx-1" />
                     <button 
                       onClick={handleCopyImproved}
-                      className="p-2 text-slate-500 hover:text-primary hover:bg-white dark:hover:bg-slate-700 rounded-lg transition-all flex items-center gap-2 text-xs font-bold"
+                      className="p-2 text-slate-500 hover:text-primary hover:bg-white dark:hover:bg-slate-700 rounded-lg transition-all flex items-center gap-1.5 text-xs font-bold"
                       title="Copy Improved Test Cases"
                     >
                       <Copy size={14} />
-                      Copy
+                      <span>Copy</span>
                     </button>
                     <div className="w-px h-4 bg-slate-200 dark:bg-slate-700 self-center mx-1" />
                     <button 
                       onClick={() => setIsAddToFolderModalOpen(true)}
-                      className="p-2 text-indigo-500 hover:text-indigo-600 dark:text-indigo-400 dark:hover:text-indigo-300 hover:bg-white dark:hover:bg-slate-700 rounded-lg transition-all flex items-center gap-2 text-xs font-bold"
+                      className="p-2 text-indigo-500 hover:text-indigo-600 dark:text-indigo-400 dark:hover:text-indigo-300 hover:bg-white dark:hover:bg-slate-700 rounded-lg transition-all flex items-center gap-1.5 text-xs font-bold"
                       title="Add to Folder"
                     >
                       <FolderPlus size={14} />
-                      Add to Folder
+                      <span className="whitespace-nowrap">Add to Folder</span>
                     </button>
                   </div>
                 </div>

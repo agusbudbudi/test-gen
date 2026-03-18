@@ -28,7 +28,7 @@ const ChatBubble = ({ entry, index, onDelete }: any) => {
 
       {/* Message Content */}
       <div className={cn(
-        "flex flex-col max-w-[90%] group",
+        "flex flex-col w-full sm:max-w-[90%] group",
         isUser ? "items-end" : "items-start"
       )}>
         {/* Header/Label */}
@@ -73,9 +73,9 @@ const ChatBubble = ({ entry, index, onDelete }: any) => {
               </div>
 
               {entry.content.improvedVersion && (
-                <div className="space-y-2">
+                <div className="space-y-2 w-full min-w-0">
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Improved Version</p>
-                  <div className="overflow-x-auto min-w-[300px] md:min-w-[600px] border border-slate-100 dark:border-border-brand rounded-xl">
+                  <div className="overflow-x-auto w-full border border-slate-100 dark:border-border-brand rounded-xl">
                     <ResultTable 
                       headers={['Status', 'No', 'Section', 'Case Type', 'Title', 'Precondition', 'Step', 'Expected Result']}
                       rows={(() => {
@@ -120,8 +120,8 @@ const ChatBubble = ({ entry, index, onDelete }: any) => {
               )}
             </div>
           ) : (
-            <div className="space-y-3">
-              <div className="overflow-x-auto min-w-[300px] md:min-w-[600px] transition-all duration-300">
+            <div className="space-y-3 w-full min-w-0">
+              <div className="overflow-x-auto w-full transition-all duration-300">
                 <ResultTable 
                   headers={entry.type === 'bug_result' 
                     ? ['Summary', 'Description', 'Severity & Retest Result']
@@ -151,14 +151,14 @@ const ChatBubble = ({ entry, index, onDelete }: any) => {
         </div>
 
         {/* Footer info & Actions */}
-        <div className="flex items-center gap-3 mt-2 px-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex items-center gap-3 mt-2 px-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
           <div className="flex items-center gap-1 text-[10px] text-slate-400">
             <Clock size={12} />
             {date}
           </div>
           <button 
             onClick={() => onDelete(index)}
-            className="text-slate-300 hover:text-red-500 transition-colors hover-scale"
+            className="text-slate-400 hover:text-red-500 transition-colors hover-scale p-1"
             title="Delete from history"
           >
             <Trash2 size={14} />
@@ -198,7 +198,7 @@ const HistoryPage = () => {
   return (
     <div className="h-[calc(110vh-120px)] flex flex-col space-y-6 animate-slide-up">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">
             History
@@ -211,7 +211,7 @@ const HistoryPage = () => {
         {historyEntries.length > 0 && (
           <button
             onClick={handleClearAll}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all hover-scale"
+            className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all hover-scale w-full sm:w-auto"
           >
             <Trash2 size={18} />
             Clear All

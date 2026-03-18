@@ -80,7 +80,7 @@ const DocumentationPage = () => {
   }, [docId, selectedDoc]);
 
   const renderDocList = () => (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {filteredDocs.map((doc) => {
         const Icon = iconMap[doc.id] || Book;
         return (
@@ -110,46 +110,48 @@ const DocumentationPage = () => {
   );
 
   return (
-    <div className="flex flex-col h-full bg-slate-50/50 dark:bg-transparent -mx-4 lg:-mx-6 -mt-16 lg:-mt-6">
-      {/* Header */}
-      <div className="sticky top-0 z-30 flex items-center justify-between px-6 lg:px-10 py-3 border-b border-slate-200 dark:border-border-brand bg-white/80 dark:bg-sidebar-bg/90 backdrop-blur-md">
-        <div className="flex items-center gap-4 lg:gap-6">
-          {docId && (
-            <button
-              onClick={() => navigate("/documentation")}
-              className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-primary/10 text-slate-500 dark:text-slate-400 transition-colors"
-            >
-              <ArrowLeft size={18} />
-            </button>
-          )}
-          <div>
-            <h1 className="text-lg lg:text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2 lg:gap-3">
-              <Book className="text-primary w-5 h-5 lg:w-6 lg:h-6" />
-              {docId && selectedDoc ? selectedDoc.title : "Documentation"}
-            </h1>
-            <p className="text-[10px] lg:text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              {docId && selectedDoc
-                ? selectedDoc.description
-                : "Explore guides and resources to master all features."}
-            </p>
+    <div className="flex flex-col h-full bg-slate-50/50 dark:bg-transparent -mt-4 -mx-4 lg:-mx-6">
+      {/* Header Container */}
+      <div className="sticky top-[64px] lg:top-0 z-30 w-full border-b border-slate-200 dark:border-border-brand bg-white/80 dark:bg-sidebar-bg/90 backdrop-blur-md">
+        <div className="max-w-7xl mx-auto px-6 lg:px-10 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-4 lg:gap-6">
+            {docId && (
+              <button
+                onClick={() => navigate("/documentation")}
+                className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-primary/10 text-slate-500 dark:text-slate-400 transition-colors"
+              >
+                <ArrowLeft size={18} />
+              </button>
+            )}
+            <div>
+              <h1 className="text-lg lg:text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2 lg:gap-3">
+                <Book className="text-primary w-5 h-5 lg:w-6 lg:h-6" />
+                {docId && selectedDoc ? selectedDoc.title : "Documentation"}
+              </h1>
+              <p className="text-[10px] lg:text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                {docId && selectedDoc
+                  ? selectedDoc.description
+                  : "Explore guides and resources to master all features."}
+              </p>
+            </div>
           </div>
-        </div>
 
-        {!docId && (
-          <div className="relative w-64 hidden sm:block">
-            <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-              size={16}
-            />
-            <input
-              type="text"
-              placeholder="Search guides..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-white/50 dark:bg-surface-dark border border-slate-200 dark:border-border-brand rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
-            />
-          </div>
-        )}
+          {!docId && (
+            <div className="relative w-64 hidden sm:block">
+              <Search
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                size={16}
+              />
+              <input
+                type="text"
+                placeholder="Search guides..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 bg-white/50 dark:bg-surface-dark border border-slate-200 dark:border-border-brand rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
+              />
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Content Area */}
@@ -164,7 +166,7 @@ const DocumentationPage = () => {
                 </p>
               </div>
             ) : (
-              <div className="prose prose-slate dark:prose-invert max-w-none animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="prose prose-slate dark:prose-invert max-w-none pt-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
                   components={{

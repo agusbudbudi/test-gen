@@ -320,7 +320,7 @@ const ACAnalyzerPage = () => {
               {result !== null && (
                 <div
                   ref={resultRef}
-                  className="markdown-body max-w-none break-words relative pb-10"
+                  className="markdown-body max-w-none break-words relative pb-4 sm:pb-10"
                 >
                   <ReactMarkdown
                     remarkPlugins={[remarkGfm]}

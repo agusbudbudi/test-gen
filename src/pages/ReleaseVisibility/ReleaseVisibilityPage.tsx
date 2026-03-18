@@ -125,33 +125,37 @@ const ReleaseVisibilityPage = () => {
 
       {/* Results Table */}
       <div className="bg-white dark:bg-surface-card border border-slate-200 dark:border-border-brand rounded-2xl overflow-hidden">
-        <div className="p-4 border-b border-slate-100 dark:border-border-brand flex items-center gap-2 bg-slate-50/50 dark:bg-sidebar-bg/50">
-          <TableIcon size={18} className="text-slate-400" />
-          <h3 className="font-semibold text-slate-800 dark:text-white text-sm">
-            Tickets Ready to Deploy
-          </h3>
-          {tickets.length > 0 && (
-            <>
-              <span className="ml-auto px-2 py-0.5 bg-primary/10 text-primary dark:text-primary-foreground rounded-full text-[10px] font-bold">
-                {tickets.length} Results
+        <div className="p-4 border-b border-slate-100 dark:border-border-brand flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/50 dark:bg-sidebar-bg/50">
+          <div className="flex items-center gap-2">
+            <TableIcon size={18} className="text-slate-400" />
+            <h3 className="font-semibold text-slate-800 dark:text-white text-sm">
+              Tickets Ready to Deploy
+            </h3>
+            {tickets.length > 0 && (
+              <span className="px-2 py-0.5 bg-primary/10 text-primary dark:text-primary-foreground rounded-full text-[10px] font-bold">
+                {tickets.length}
               </span>
-              <button
-                onClick={handleCopy}
-                className={cn(
-                  "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all",
-                  copySuccess
-                    ? "bg-emerald-500 text-white"
-                    : "bg-slate-100 dark:bg-surface-dark text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-primary/20",
-                )}
-              >
-                {copySuccess ? <Check size={14} /> : <Copy size={14} />}
-                {copySuccess ? "Copied!" : "Copy to Spreadsheet"}
-              </button>
-            </>
+            )}
+          </div>
+          
+          {tickets.length > 0 && (
+            <button
+              onClick={handleCopy}
+              className={cn(
+                "flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all w-full sm:w-auto",
+                copySuccess
+                  ? "bg-emerald-500 text-white"
+                  : "bg-slate-100 dark:bg-surface-dark text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-primary/20",
+              )}
+            >
+              {copySuccess ? <Check size={14} /> : <Copy size={14} />}
+              {copySuccess ? "Copied!" : "Copy to Spreadsheet"}
+            </button>
           )}
         </div>
 
-        <div className="overflow-x-auto">
+        {/* Desktop Table View */}
+        <div className="hidden lg:block overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/50 dark:bg-sidebar-bg/30 border-b border-slate-100 dark:border-border-brand">
@@ -307,6 +311,96 @@ const ReleaseVisibilityPage = () => {
                 ))}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile Card View */}
+        <div className="lg:hidden divide-y divide-slate-100 dark:divide-border-brand/30">
+          {loading && (
+            <div className="px-6 py-20 text-center">
+              <div className="flex flex-col items-center gap-3">
+                <RefreshCw size={32} className="text-primary/40 animate-spin" />
+                <p className="text-sm text-slate-400 animate-pulse font-medium">
+                  Analyzing tickets for mobile...
+                </p>
+              </div>
+            </div>
+          )}
+
+          {!loading && tickets.length === 0 && (
+            <div className="px-6 py-20 text-center text-slate-400">
+              <div className="flex flex-col items-center gap-3 opacity-40">
+                <Box size={48} />
+                <p className="text-sm font-medium">No tickets found.</p>
+              </div>
+            </div>
+          )}
+
+          {!loading &&
+            Object.entries(
+              tickets.reduce(
+                (acc, ticket) => {
+                  const group = ticket.assignee || "Unassigned";
+                  if (!acc[group]) acc[group] = [];
+                  acc[group].push(ticket);
+                  return acc;
+                },
+                {} as Record<string, typeof tickets>,
+              ),
+            ).map(([groupName, groupTickets]) => (
+              <div key={groupName} className="flex flex-col">
+                <div className="px-4 py-2 bg-slate-50/80 dark:bg-sidebar-bg/50 border-y border-slate-100 dark:border-border-brand flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-bold uppercase">
+                      {groupName.charAt(0)}
+                    </div>
+                    <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
+                      {groupName}
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-bold text-slate-400">
+                    {groupTickets.length}
+                  </span>
+                </div>
+                {groupTickets.map((ticket) => (
+                  <div key={ticket.key} className="p-4 space-y-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <a
+                        href={ticket.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary font-bold text-xs hover:underline flex items-center gap-1"
+                      >
+                        {ticket.key} <ExternalLink size={10} />
+                      </a>
+                      <div className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold border border-emerald-500/10">
+                        {ticket.status}
+                      </div>
+                    </div>
+                    <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-100 leading-snug">
+                      {ticket.title}
+                    </h4>
+                    <div className="flex flex-wrap gap-2">
+                      <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[10px] font-bold border border-purple-500/10">
+                        <Layers size={10} /> {ticket.area}
+                      </div>
+                    </div>
+                    <div className="bg-slate-50 dark:bg-surface-dark/40 p-3 rounded-xl border border-slate-100 dark:border-border-brand/30">
+                      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter mb-2 flex items-center gap-1.5">
+                        <Sparkles size={10} className="text-primary" /> Suggetion Demo Flow
+                      </div>
+                      <div className="space-y-1.5">
+                        {ticket.demoFlow.split("\n").map((line, i) => (
+                          <div key={i} className="flex gap-2 text-[11px] text-slate-600 dark:text-slate-300 leading-normal">
+                            <span className="text-primary font-bold shrink-0">•</span>
+                            <span>{line.replace(/^[#*-]\s*/, "")}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ))}
         </div>
       </div>
     </div>
