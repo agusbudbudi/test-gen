@@ -1,12 +1,10 @@
 import 'dotenv/config';
 import express from 'express';
-import path from 'path';
-import axios from 'axios';
 import { fileURLToPath } from 'url';
-import { DataStore } from '../server/dashboard/dataStore.js';
-import { runsRouter } from '../server/dashboard/routes/runs.js';
-import { metricsRouter } from '../server/dashboard/routes/metrics.js';
-import { runDetailsRouter } from '../server/dashboard/routes/runDetails.js';
+import { DataStore } from './dashboard/dataStore.js';
+import { runsRouter } from './dashboard/routes/runs.js';
+import { metricsRouter } from './dashboard/routes/metrics.js';
+import { runDetailsRouter } from './dashboard/routes/runDetails.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

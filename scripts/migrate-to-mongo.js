@@ -2,13 +2,13 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import 'dotenv/config';
-import connectDB from '../server/dashboard/db.js';
-import { Run } from '../server/dashboard/models/Run.js';
+import connectDB from '../api/dashboard/db.js';
+import { Run } from '../api/dashboard/models/Run.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const JSON_PATH = path.join(__dirname, '../server/dashboard/data/runs.json');
+const JSON_PATH = path.join(__dirname, '../api/dashboard/data/runs.json');
 
 async function migrate() {
   console.log('--- Starting MongoDB Migration ---');
