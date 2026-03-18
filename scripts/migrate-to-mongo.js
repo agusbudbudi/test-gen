@@ -34,21 +34,15 @@ async function migrate() {
     let skippedCount = 0;
 
     for (const runData of runs) {
-      const existing = await Run.findOne({ runId: runData.runId });
-      
-      if (existing) {
-        console.log(`[Skipped] Run ${runData.runId} already exists in DB.`);
-        skippedCount++;
-        continue;
-      }
-
-      const run = new Run({
-        ...runData,
-        createdAt: runData.createdAt || new Date().toISOString()
-      });
-
-      await run.save();
-      console.log(`[Migrated] Run ${runData.runId} saved.`);
+      await Run.findOneAndUpdate(
+        { runId: runData.runId },
+        {
+          ...runData,
+          createdAt: runData.createdAt || new Date().toISOString()
+        },
+        { upsert: true }
+      );
+      console.log(`[Processed] Run ${runData.runId} updated/saved.`);
       migratedCount++;
     }
 
