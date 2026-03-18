@@ -134,82 +134,85 @@ const BugReportPage = () => {
           onChange={(e) => setBugDetails(e.target.value)}
         />
 
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <button
             onClick={() => setBugDetails('')}
-            className="flex items-center gap-2 px-4 py-2 text-slate-500 hover:text-red-500 transition-colors text-sm font-medium"
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-slate-100 hover:bg-red-50 dark:bg-slate-800 dark:hover:bg-red-900/20 text-slate-600 hover:text-red-500 rounded-xl transition-all text-sm font-medium hover-scale w-full sm:w-auto border border-transparent hover:border-red-200 dark:hover:border-red-900/50"
           >
             <Trash2 size={16} />
             Clear Input
           </button>
           
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
             {/* Smart Copy with dropdown */}
-            <div className="relative" ref={menuRef}>
-              <button
-                onClick={() => setShowSmartCopyMenu(prev => !prev)}
-                disabled={!bugData}
-                className="flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/50 rounded-xl text-sm font-semibold text-indigo-700 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/10 transition-all disabled:opacity-50 disabled:cursor-not-allowed hover-scale"
-                title="Smart Copy for Jira"
-              >
-                <Sparkles size={18} />
-                Smart Copy
-                <ChevronDown size={14} className={`transition-transform duration-200 ${showSmartCopyMenu ? 'rotate-180' : ''}`} />
-              </button>
+            {bugData && (
+              <div className="relative w-full sm:w-auto" ref={menuRef}>
+                <button
+                  onClick={() => setShowSmartCopyMenu(prev => !prev)}
+                  className="flex items-center justify-center gap-2 px-5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/50 rounded-xl text-sm font-semibold text-indigo-700 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/10 transition-all hover-scale w-full sm:w-auto"
+                  title="Smart Copy for Jira"
+                >
+                  <Sparkles size={18} />
+                  Smart Copy
+                  <ChevronDown size={14} className={`transition-transform duration-200 ${showSmartCopyMenu ? 'rotate-180' : ''}`} />
+                </button>
 
-              {showSmartCopyMenu && (
-                <div className="absolute right-0 top-full mt-2 w-52 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150">
-                  <div className="px-3 py-2 border-b border-slate-100 dark:border-slate-700">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Paste to Jira</p>
+                {showSmartCopyMenu && (
+                  <div className="absolute left-0 sm:right-0 sm:left-auto mt-2 w-full sm:w-52 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150">
+                    <div className="px-3 py-2 border-b border-slate-100 dark:border-slate-700">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Paste to Jira</p>
+                    </div>
+                    <button
+                      onClick={() => performSmartCopy(true)}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors text-left"
+                    >
+                      <Table2 size={16} className="text-indigo-500 flex-shrink-0" />
+                      <div>
+                        <div className="font-semibold">Copy with Header</div>
+                        <div className="text-xs text-slate-400">Includes column names</div>
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => performSmartCopy(false)}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors text-left"
+                    >
+                      <AlignJustify size={16} className="text-indigo-400 flex-shrink-0" />
+                      <div>
+                        <div className="font-semibold">Copy without Header</div>
+                        <div className="text-xs text-slate-400">Data rows only</div>
+                      </div>
+                    </button>
                   </div>
-                  <button
-                    onClick={() => performSmartCopy(true)}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors text-left"
-                  >
-                    <Table2 size={16} className="text-indigo-500 flex-shrink-0" />
-                    <div>
-                      <div className="font-semibold">Copy with Header</div>
-                      <div className="text-xs text-slate-400">Includes column names</div>
-                    </div>
-                  </button>
-                  <button
-                    onClick={() => performSmartCopy(false)}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors text-left"
-                  >
-                    <AlignJustify size={16} className="text-indigo-400 flex-shrink-0" />
-                    <div>
-                      <div className="font-semibold">Copy without Header</div>
-                      <div className="text-xs text-slate-400">Data rows only</div>
-                    </div>
-                  </button>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            )}
 
             {/* Export to Jira */}
-            <button
-              onClick={handleExportClick}
-              disabled={!bugData || exporting}
-              className="flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-slate-800 border-1 border-blue-600 dark:border-blue-500 text-blue-600 dark:text-blue-400 font-bold text-sm rounded-xl transition-all hover:bg-blue-50 dark:hover:bg-blue-900/10 disabled:opacity-50 disabled:cursor-not-allowed hover-scale group"
-              title="Export to Jira"
-            >
-              {exporting ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
-                  <span>Exporting {progress.done}/{progress.total}...</span>
-                </>
-              ) : (
-                <>
-                  <img src="/assets/icons/jira-icon.png" alt="Jira" className="w-4 h-4 object-contain" />
-                  Export to Jira
-                </>
-              )}
-            </button>
+            {bugData && (
+              <button
+                onClick={handleExportClick}
+                disabled={exporting}
+                className="flex items-center justify-center gap-2 px-5 py-2.5 bg-white dark:bg-slate-800 border-1 border-blue-600 dark:border-blue-500 text-blue-600 dark:text-blue-400 font-bold text-sm rounded-xl transition-all hover:bg-blue-50 dark:hover:bg-blue-900/10 disabled:opacity-50 disabled:cursor-not-allowed hover-scale group w-full sm:w-auto"
+                title="Export to Jira"
+              >
+                {exporting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                    <span>Exporting {progress.done}/{progress.total}...</span>
+                  </>
+                ) : (
+                  <>
+                    <img src="/assets/icons/jira-icon.png" alt="Jira" className="w-4 h-4 object-contain" />
+                    Export to Jira
+                  </>
+                )}
+              </button>
+            )}
 
             <button
               onClick={handleGenerate}
               disabled={loading}
-              className="flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary-hover text-white font-semibold text-sm rounded-xl transition-all disabled:opacity-70 disabled:cursor-not-allowed hover-scale"
+              className="flex items-center justify-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary-hover text-white font-semibold text-sm rounded-xl transition-all disabled:opacity-70 disabled:cursor-not-allowed hover-scale w-full sm:w-auto"
             >
               {loading ? (
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -223,7 +226,7 @@ const BugReportPage = () => {
       </div>
 
       {bugData && (
-        <div className="space-y-4 animate-in fade-in zoom-in-95 duration-500">
+        <div className="space-y-4 w-full min-w-0 animate-in fade-in zoom-in-95 duration-500">
           {/* Success Banner */}
           {exportedJiraData && (
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800/30 rounded-2xl animate-in slide-in-from-top-4 duration-300">
@@ -271,10 +274,12 @@ const BugReportPage = () => {
             <span className="text-xs font-bold uppercase tracking-widest">Structured Bug Report</span>
             <div className="h-px flex-1 bg-slate-200 dark:bg-slate-700"></div>
           </div>
-          <ResultTable 
-            headers={bugData[0]} 
-            rows={bugData.slice(1)} 
-          />
+          <div className="w-full max-w-full overflow-hidden rounded-xl">
+            <ResultTable 
+              headers={bugData[0]} 
+              rows={bugData.slice(1)} 
+            />
+          </div>
         </div>
       )}
       <LinkWorkItemModal
