@@ -3,13 +3,19 @@ import express from 'express';
 import path from 'path';
 import axios from 'axios';
 import { fileURLToPath } from 'url';
+import { DataStore } from '../server/dashboard/dataStore.js';
+import { runsRouter } from '../server/dashboard/routes/runs.js';
+import { metricsRouter } from '../server/dashboard/routes/metrics.js';
+import { runDetailsRouter } from '../server/dashboard/routes/runDetails.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
 
-app.use(express.json({ limit: "2mb" }));
+app.use(express.json({ limit: "50mb" })); // Increased limit for large Cypress test suites
+
+const dashboardStore = new DataStore();
 
 // Health check
 app.get("/api/health", (_req, res) => {
@@ -393,7 +399,29 @@ app.post("/api/confluence/page", async (req, res) => {
   }
 });
 
-// Serve the app statically from the dist folder in production
+// Dashboard Routes
+app.use('/api/dashboard/runs', runsRouter(dashboardStore));
+app.use('/api/dashboard/metrics', metricsRouter(dashboardStore));
+app.use('/api/dashboard/run-details', runDetailsRouter(dashboardStore));
+
+// Webhook for Cypress results
+app.post("/api/dashboard/webhook", async (req, res) => {
+  const result = req.body;
+  if (!result || !result.runId) {
+    return res.status(400).json({ error: "Invalid payload: missing runId" });
+  }
+  
+  const saved = await dashboardStore.save({
+    ...result,
+    createdAt: result.createdAt || new Date().toISOString()
+  });
+  
+  if (saved) {
+    res.status(201).json({ ok: true, runId: result.runId });
+  } else {
+    res.status(500).json({ error: "Failed to save result" });
+  }
+});
 const distDir = path.join(__dirname, "..", "dist");
 // Vercel handles static serving via rewrites in vercel.json, 
 // but keeping this for local development if needed.
