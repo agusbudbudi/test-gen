@@ -36,7 +36,9 @@ const RunSchema = new mongoose.Schema({
     failed: Number,
     broken: Number,
     skipped: Number,
-    duration: Number
+    duration: Number,
+    passRate: Number,
+    status: String
   },
   suites: [SuiteSchema],
   tests: [TestSchema], // Denormalized for easier querying
