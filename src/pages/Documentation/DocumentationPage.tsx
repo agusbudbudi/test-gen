@@ -42,6 +42,7 @@ const iconMap: Record<string, any> = {
   "history": HistoryIcon,
   "settings": Settings,
   "atlassian-token": Key,
+  "flaky-tests": Beaker,
 };
 
 const DocumentationPage = () => {

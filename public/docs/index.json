@@ -68,5 +68,12 @@
     "description": "Step-by-step guide to generate an API token for Jira and Confluence integrations.",
     "category": "System",
     "file": "atlassian-api-token.md"
+  },
+  {
+    "id": "flaky-tests",
+    "title": "Flaky Tests & Stability",
+    "description": "Strategies to identify, isolate, and fix flaky tests and environmental issues in automation.",
+    "category": "Execution & Insight",
+    "file": "flaky-tests.md"
   }
 ]
