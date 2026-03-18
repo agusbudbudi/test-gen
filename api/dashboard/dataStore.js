@@ -118,11 +118,3 @@ export function aggregateStatusBuckets(runs) {
 
   return buckets.sort((a, b) => new Date(a.day) - new Date(b.day));
 }
-
-export function resolveDataFile(filePath) {
-  const dir = path.dirname(filePath);
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
-  return filePath;
-}
