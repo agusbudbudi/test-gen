@@ -16,6 +16,9 @@ import {
   ClipboardList,
   Table as TableIcon,
   Lightbulb,
+  LayoutDashboard,
+  BarChart3,
+  Activity,
 } from "lucide-react";
 import { useUIStore } from "@/stores/uiStore";
 import { useThemeStore } from "@/stores/themeStore";
@@ -38,6 +41,7 @@ const Sidebar = () => {
         { to: "/review", icon: Bot, label: "AI Review TCs" },
         { to: "/bug-report", icon: Bug, label: "AI Bug Report" },
         { to: "/ac-analyzer", icon: ClipboardList, label: "AI AC Analyzer" },
+        { to: "/release-visibility", icon: TableIcon, label: "Release Visibility" },
         {
           to: "/product-knowledge",
           icon: BookOpen,
@@ -48,9 +52,20 @@ const Sidebar = () => {
     {
       group: "Execution & Insight",
       items: [
-        { to: "/release-visibility", icon: TableIcon, label: "Release Visibility" },
         { to: "/test-management", icon: Beaker, label: "Test Management" },
         { to: "/history", icon: History, label: "History" },
+      ],
+    },
+    {
+      group: "Automation",
+      items: [
+        {
+          to: "/automation/overview",
+          icon: LayoutDashboard,
+          label: "Overview",
+        },
+        { to: "/automation/runs", icon: Activity, label: "Automation Run" },
+        { to: "/automation/insight", icon: BarChart3, label: "Insight" },
       ],
     },
     {

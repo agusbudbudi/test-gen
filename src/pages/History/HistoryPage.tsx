@@ -78,6 +78,8 @@ const ChatBubble = ({ entry, index, onDelete }: any) => {
                   <div className="overflow-x-auto w-full border border-slate-100 dark:border-border-brand rounded-xl">
                     <ResultTable 
                       headers={['Status', 'No', 'Section', 'Case Type', 'Title', 'Precondition', 'Step', 'Expected Result']}
+                      minWidth="0"
+                      compact={true}
                       rows={(() => {
                         try {
                           const parsed = JSON.parse(entry.content.improvedVersion)
@@ -127,6 +129,8 @@ const ChatBubble = ({ entry, index, onDelete }: any) => {
                     ? ['Summary', 'Description', 'Severity & Retest Result']
                     : ['No', 'Section', 'Case Type', 'Title', 'Precondition', 'Step', 'Expected Result']
                   }
+                  minWidth="0"
+                  compact={true}
                   rows={(() => {
                     const rows = Array.isArray(entry.content) ? entry.content : []
                     return !isExpanded && rows.length > 1 ? [rows[0]] : rows

@@ -19,7 +19,58 @@ export function useReleaseVisibility() {
   const { jiraUrl, jiraEmail, jiraToken, apiKey, selectedModel } = useUIStore();
   const addToast = useToastStore((state) => state.addToast);
 
-  const queryTickets = async (sprint: string, assignee: string) => {
+  const updateTicket = (key: string, updates: Partial<Ticket>) => {
+    setTickets((prev) =>
+      prev.map((t) => (t.key === key ? { ...t, ...updates } : t)),
+    );
+  };
+
+  const refreshTicketAI = async (ticket: Ticket) => {
+    if (!apiKey) {
+      addToast("API Key is missing!", "warning");
+      return;
+    }
+
+    updateTicket(ticket.key, { area: "Analyzing...", demoFlow: "Analyzing..." });
+
+    try {
+      const aiRes = await fetchChat(
+        {
+          model: selectedModel,
+          messages: [
+            {
+              role: "system",
+              content: `You are a Senior QA Engineer. Analyze the Jira ticket and provide:
+1. Area: 2-5 words identifying the specific application module (e.g., "COP - EMR Filter").
+2. Demo Flow: minimum 2-3 maximum as much as possible based on the ticket description, shall cover main flows in extremely concise bullet points showing the absolute critical path to demo. Use short phrases (max 10 words per point).
+
+Return your response in JSON format: { "area": "...", "demoFlow": "..." }`,
+            },
+            {
+              role: "user",
+              content: `Ticket Key: ${ticket.key}\nSummary: ${ticket.title}`,
+            },
+          ],
+          temperature: 0,
+          response_format: { type: "json_object" },
+        },
+        apiKey,
+      );
+
+      const parsed = JSON.parse(aiRes.choices?.[0]?.message?.content || "{}");
+      updateTicket(ticket.key, {
+        area: parsed.area || "General",
+        demoFlow: Array.isArray(parsed.demoFlow)
+          ? parsed.demoFlow.join("\n")
+          : parsed.demoFlow || "N/A",
+      });
+    } catch (aiErr) {
+      console.error("AI Analysis failed for", ticket.key, aiErr);
+      updateTicket(ticket.key, { area: "Error", demoFlow: "AI analysis failed." });
+    }
+  };
+
+  const queryTickets = async (sprint: string, assignee: string, statuses: string[] = ["Ready to Deploy"]) => {
     if (!jiraUrl || !jiraEmail || !jiraToken) {
       addToast(
         "Please configure Jira settings first (Settings → Jira Integration).",
@@ -85,8 +136,9 @@ export function useReleaseVisibility() {
 
       console.log(`Resolved emails to accountIds: ${accountIds.join(", ")}`);
 
-      // 2. Query Tickets using accountIds
-      const jql = `status in ("Ready to Deploy") AND sprint = "${sprint}" AND assignee in (${accountIds.map((id) => `"${id}"`).join(",")})`;
+      // 2. Query Tickets using accountIds and selected statuses
+      const statusJQL = statuses.map((s) => `"${s}"`).join(",");
+      const jql = `status in (${statusJQL}) AND sprint = "${sprint}" AND assignee in (${accountIds.map((id) => `"${id}"`).join(",")})`;
       const res = await fetch(
         `/api/jira/search?jql=${encodeURIComponent(jql)}&jiraUrl=${encodeURIComponent(jiraUrl)}&email=${encodeURIComponent(jiraEmail)}&token=${encodeURIComponent(jiraToken)}`,
       );
@@ -109,95 +161,97 @@ export function useReleaseVisibility() {
         return;
       }
 
-      // Process each ticket to detect area
-      const processedTickets: Ticket[] = await Promise.all(
-        issues.map(async (issue: any) => {
-          const key = issue.key;
-          const summary = issue.fields?.summary || "";
+      // Convert Jira issues to interim format
+      const initialTickets: Ticket[] = issues.map((issue: any) => {
+        const key = issue.key;
+        const summary = issue.fields?.summary || "";
+        let descriptionText = "";
+        const descField = issue.fields?.description;
+        if (descField) {
+          if (typeof descField === "string") {
+            descriptionText = descField;
+          } else if (descField.type === "doc" && Array.isArray(descField.content)) {
+            const extractText = (node: any): string => {
+              if (node.type === "text") return node.text || "";
+              if (node.type === "hardBreak") return "\n";
+              if (Array.isArray(node.content)) {
+                const text = node.content.map(extractText).join("");
+                return node.type === "paragraph" ? text + "\n" : text;
+              }
+              return "";
+            };
+            descriptionText = descField.content.map(extractText).join("").trim();
+          }
+        }
 
-          // Extract description text
-          let descriptionText = "";
-          const descField = issue.fields?.description;
-          if (descField) {
-            if (typeof descField === "string") {
-              descriptionText = descField;
-            } else if (
-              descField.type === "doc" &&
-              Array.isArray(descField.content)
-            ) {
-              const extractText = (node: any): string => {
-                if (node.type === "text") return node.text || "";
-                if (node.type === "hardBreak") return "\n";
-                if (Array.isArray(node.content)) {
-                  const text = node.content.map(extractText).join("");
-                  return node.type === "paragraph" ? text + "\n" : text;
-                }
-                return "";
+        return {
+          key,
+          url: `${jiraUrl.replace(/\/$/, "")}/browse/${key}`,
+          title: summary,
+          area: "Detecting...",
+          status: issue.fields?.status?.name || "Unknown",
+          demoFlow: "Generating...",
+          assignee: issue.fields?.assignee?.displayName || issue.fields?.assignee?.emailAddress || "Unassigned",
+          description: descriptionText,
+        } as any;
+      });
+
+      setTickets(initialTickets);
+
+      // 3. Batch AI Analysis (Process in batches of 5)
+      const BATCH_SIZE = 5;
+      for (let i = 0; i < initialTickets.length; i += BATCH_SIZE) {
+        const batch = initialTickets.slice(i, i + BATCH_SIZE);
+        
+        try {
+          const aiRes = await fetchChat(
+            {
+              model: selectedModel,
+              messages: [
+                {
+                  role: "system",
+                  content: `You are a Senior QA Engineer. Analyze multiple Jira tickets and provide "area" (2-5 words module name) and "demoFlow" (concise bullet points) for each.
+Return a JSON object where keys are the Ticket Keys and values are { "area": "...", "demoFlow": "..." }.`,
+                },
+                {
+                  role: "user",
+                  content: batch.map(t => `Key: ${t.key}\nSummary: ${t.title}\nDescription: ${(t as any).description?.slice(0, 500)}`).join("\n---\n"),
+                },
+              ],
+              temperature: 0,
+              response_format: { type: "json_object" },
+            },
+            apiKey,
+          );
+
+          const results = JSON.parse(aiRes.choices?.[0]?.message?.content || "{}");
+          
+          setTickets(prev => prev.map(t => {
+            if (results[t.key]) {
+              return {
+                ...t,
+                area: results[t.key].area || "General",
+                demoFlow: Array.isArray(results[t.key].demoFlow) 
+                  ? results[t.key].demoFlow.join("\n") 
+                  : results[t.key].demoFlow || "N/A"
               };
-              descriptionText = descField.content
-                .map(extractText)
-                .join("")
-                .trim();
             }
-          }
+            return t;
+          }));
+        } catch (batchErr) {
+          console.error("Batch AI analysis failed for batch starting at", i, batchErr);
+          // Update failed batch tickets to error state
+          setTickets(prev => prev.map(t => {
+            if (batch.some(bt => bt.key === t.key) && (t.area === "Detecting..." || t.demoFlow === "Generating...")) {
+              return { ...t, area: "Error", demoFlow: "AI analysis failed." };
+            }
+            return t;
+          }));
+        }
+      }
 
-          const status = issue.fields?.status?.name || "Unknown";
-          const assigneeEmail =
-            issue.fields?.assignee?.emailAddress || "Unassigned";
-
-          // Detect area and demo flow using AI
-          let area = "General";
-          let demoFlow = "N/A";
-          try {
-            const aiRes = await fetchChat(
-              {
-                model: selectedModel,
-                messages: [
-                  {
-                    role: "system",
-                    content: `You are a Senior QA Engineer. Analyze the Jira ticket and provide:
-1. Area: 2-5 words identifying the specific application module (e.g., "COP - EMR Filter").
-2. Demo Flow: minimum 2-3 maximum as much as possible based on the ticket description, shall cover main flows in extremely concise bullet points showing the absolute critical path to demo. Use short phrases (max 10 words per point).
-
-Return your response in JSON format: { "area": "...", "demoFlow": "..." }`,
-                  },
-                  {
-                    role: "user",
-                    content: `Ticket Key: ${key}\nSummary: ${summary}\nDescription: ${descriptionText.slice(0, 1000)}`,
-                  },
-                ],
-                temperature: 0,
-                response_format: { type: "json_object" },
-              },
-              apiKey,
-            );
-
-            const parsed = JSON.parse(
-              aiRes.choices?.[0]?.message?.content || "{}",
-            );
-            area = parsed.area || "General";
-            demoFlow = Array.isArray(parsed.demoFlow)
-              ? parsed.demoFlow.join("\n")
-              : parsed.demoFlow || "N/A";
-          } catch (aiErr) {
-            console.error("AI Analysis failed for", key, aiErr);
-          }
-
-          return {
-            key,
-            url: `${jiraUrl.replace(/\/$/, "")}/browse/${key}`,
-            title: summary,
-            area,
-            status,
-            demoFlow,
-            assignee: assigneeEmail,
-          };
-        }),
-      );
-
-      setTickets(processedTickets);
       addToast(
-        `Successfully retrieved and analyzed ${processedTickets.length} tickets.`,
+        `Successfully retrieved and analyzed ${initialTickets.length} tickets.`,
         "success",
       );
     } catch (err: any) {
@@ -207,5 +261,5 @@ Return your response in JSON format: { "area": "...", "demoFlow": "..." }`,
     }
   };
 
-  return { queryTickets, tickets, loading };
+  return { queryTickets, tickets, loading, updateTicket, refreshTicketAI };
 }

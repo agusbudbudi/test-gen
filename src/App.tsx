@@ -28,11 +28,21 @@ const TestManagementPage = lazy(
 const ProductKnowledgePage = lazy(
   () => import("@/pages/ProductKnowledge/ProductKnowledgePage"),
 );
-const ACAnalyzerPage = lazy(
-  () => import("@/pages/ACAnalyzer/ACAnalyzerPage"),
-);
+const ACAnalyzerPage = lazy(() => import("@/pages/ACAnalyzer/ACAnalyzerPage"));
 const ReleaseVisibilityPage = lazy(
   () => import("@/pages/ReleaseVisibility/ReleaseVisibilityPage"),
+);
+const DashboardOverviewPage = lazy(
+  () => import("@/pages/DashboardAutomation/DashboardAutomationPage"),
+);
+const AutomationRunsPage = lazy(
+  () => import("@/pages/DashboardAutomation/AutomationRunsPage"),
+);
+const RunDetailsPage = lazy(
+  () => import("@/pages/DashboardAutomation/RunDetailsPage"),
+);
+const AutomationInsightPage = lazy(
+  () => import("@/pages/DashboardAutomation/AutomationInsightPage"),
 );
 
 const DocumentationPage = lazy(
@@ -85,20 +95,32 @@ const App = () => {
                 path="/product-knowledge"
                 element={<ProductKnowledgePage />}
               />
-              <Route
-                path="/ac-analyzer"
-                element={<ACAnalyzerPage />}
-              />
+              <Route path="/ac-analyzer" element={<ACAnalyzerPage />} />
               <Route
                 path="/release-visibility"
                 element={<ReleaseVisibilityPage />}
               />
+              <Route
+                path="/automation/overview"
+                element={<DashboardOverviewPage />}
+              />
+              <Route path="/automation/runs" element={<AutomationRunsPage />} />
+              <Route
+                path="/automation/runs/:runId"
+                element={<RunDetailsPage />}
+              />
+              <Route
+                path="/automation/insight"
+                element={<AutomationInsightPage />}
+              />
               <Route path="/documentation" element={<DocumentationPage />} />
-              <Route path="/documentation/:docId" element={<DocumentationPage />} />
+              <Route
+                path="/documentation/:docId"
+                element={<DocumentationPage />}
+              />
               <Route path="*" element={<Navigate to="/generate" replace />} />
             </Route>
           </Routes>
-
         </Suspense>
 
         <ToastContainer />
