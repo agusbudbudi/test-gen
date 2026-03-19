@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Run } from './useDashboardData';
+import { Run } from '@/stores/dashboardStore';
 
 const API_BASE = '/api/dashboard';
 
