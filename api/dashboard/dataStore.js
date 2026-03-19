@@ -64,15 +64,50 @@ export class DataStore {
     });
   }
 
+  _reconstructSuites(runData) {
+    if (!runData.tests || runData.tests.length === 0) return runData.suites || [];
+
+    const suiteMap = new Map();
+    
+    runData.tests.forEach(test => {
+      const key = `${test.parentSuite || ''}|${test.suite || ''}`;
+      if (!suiteMap.has(key)) {
+        suiteMap.set(key, {
+          suite: test.suite,
+          parentSuite: test.parentSuite,
+          title: test.suite, // For backward compatibility
+          total: 0,
+          passed: 0,
+          failed: 0,
+          broken: 0,
+          skipped: 0,
+          duration: 0,
+          tests: []
+        });
+      }
+      const stats = suiteMap.get(key);
+      stats.total++;
+      if (test.status === 'passed') stats.passed++;
+      else if (test.status === 'failed') stats.failed++;
+      else if (test.status === 'broken') stats.broken++;
+      else if (test.status === 'skipped') stats.skipped++;
+      stats.duration += (test.duration || 0);
+    });
+
+    return Array.from(suiteMap.values());
+  }
+
   async save(runData) {
     await connectDB();
     try {
-      // Find and update if runId exists, otherwise create new
-      // { upsert: true, new: true }
+      // Reconstruct suites if they are missing names or to ensure consistency
+      const suites = this._reconstructSuites(runData);
+      
       await Run.findOneAndUpdate(
         { runId: runData.runId },
         { 
           ...runData,
+          suites,
           createdAt: runData.createdAt || new Date().toISOString()
         },
         { upsert: true, new: true }

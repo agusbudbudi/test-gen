@@ -8,7 +8,7 @@ import { Run } from '../api/dashboard/models/Run.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const JSON_PATH = path.join(__dirname, '../api/dashboard/data/runs.json');
+const JSON_PATH = "/Users/agudbudiman/Documents/automation-diricare/healthapp-web-automation/dashboard/data/runs.json";
 
 async function migrate() {
   console.log('--- Starting MongoDB Migration ---');
@@ -29,21 +29,22 @@ async function migrate() {
 
     console.log(`Found ${runs.length} runs in JSON. Connecting to MongoDB...`);
     await connectDB();
+    
+    const { DataStore } = await import('../api/dashboard/dataStore.js');
+    const store = new DataStore();
 
     let migratedCount = 0;
     let skippedCount = 0;
 
     for (const runData of runs) {
-      await Run.findOneAndUpdate(
-        { runId: runData.runId },
-        {
-          ...runData,
-          createdAt: runData.createdAt || new Date().toISOString()
-        },
-        { upsert: true }
-      );
-      console.log(`[Processed] Run ${runData.runId} updated/saved.`);
-      migratedCount++;
+      const saved = await store.save(runData);
+      if (saved) {
+        console.log(`[Processed] Run ${runData.runId} updated/saved.`);
+        migratedCount++;
+      } else {
+        console.error(`[Error] Failed to save Run ${runData.runId}`);
+        skippedCount++;
+      }
     }
 
     console.log('--- Migration Summary ---');

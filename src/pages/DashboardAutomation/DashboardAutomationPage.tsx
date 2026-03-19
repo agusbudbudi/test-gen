@@ -224,7 +224,7 @@ const DashboardAutomationPage = () => {
     <div className="space-y-6 pb-12 animate-in fade-in duration-500">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+          <h1 className="text-lg font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
             <LayoutDashboard className="w-6 h-6 text-primary" />
             Dashboard Overview
           </h1>

@@ -192,7 +192,8 @@ const AutomationInsightPage = () => {
             System Initialization Failed
           </h3>
           <p className="text-xs font-medium italic mt-0.5 opacity-80">
-            Unable to synchronize with the automation dashboard. {error?.message}
+            Unable to synchronize with the automation dashboard.{" "}
+            {error?.message}
           </p>
         </div>
       </div>
@@ -204,7 +205,7 @@ const AutomationInsightPage = () => {
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+          <h1 className="text-lg font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
             <BarChart3 className="w-6 h-6 text-primary" />
             Automation Insights
           </h1>
@@ -510,7 +511,10 @@ const AutomationInsightPage = () => {
                           />
                         ),
                         li: ({ node, ...props }) => (
-                          <li className="text-sm font-medium text-slate-600 dark:text-slate-300 mb-2" {...props} />
+                          <li
+                            className="text-sm font-medium text-slate-600 dark:text-slate-300 mb-2"
+                            {...props}
+                          />
                         ),
                       }}
                     >
@@ -534,17 +538,29 @@ const AutomationInsightPage = () => {
                         ),
                         table: ({ node, ...props }) => (
                           <div className="overflow-hidden border border-slate-200 dark:border-border-brand rounded-xl">
-                            <table className="min-w-full divide-y divide-slate-200 dark:divide-border-brand m-0" {...props} />
+                            <table
+                              className="min-w-full divide-y divide-slate-200 dark:divide-border-brand m-0"
+                              {...props}
+                            />
                           </div>
                         ),
                         thead: ({ node, ...props }) => (
-                          <thead className="bg-slate-50 dark:bg-surface-dark" {...props} />
+                          <thead
+                            className="bg-slate-50 dark:bg-surface-dark"
+                            {...props}
+                          />
                         ),
                         th: ({ node, ...props }) => (
-                          <th className="px-4 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-widest" {...props} />
+                          <th
+                            className="px-4 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-widest"
+                            {...props}
+                          />
                         ),
                         td: ({ node, ...props }) => (
-                          <td className="px-4 py-3 text-xs font-medium text-slate-600 dark:text-slate-300 border-t border-slate-100 dark:border-border-brand/50" {...props} />
+                          <td
+                            className="px-4 py-3 text-xs font-medium text-slate-600 dark:text-slate-300 border-t border-slate-100 dark:border-border-brand/50"
+                            {...props}
+                          />
                         ),
                       }}
                     >
@@ -641,7 +657,10 @@ const AutomationInsightPage = () => {
             <div className="relative z-10">
               <div className="flex items-center gap-2.5 mb-3">
                 <div className="w-7 h-7 rounded-lg bg-indigo-500/10 dark:bg-indigo-500/20 flex items-center justify-center">
-                  <Lightbulb size={14} className="text-indigo-600 dark:text-indigo-400" />
+                  <Lightbulb
+                    size={14}
+                    className="text-indigo-600 dark:text-indigo-400"
+                  />
                 </div>
                 <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">
                   Pro Tip
@@ -651,11 +670,11 @@ const AutomationInsightPage = () => {
                 Tests failing more than 3 times a day in different runs are
                 likely flaky or environmental.
               </p>
-              <button 
+              <button
                 onClick={() => navigate("/documentation/flaky-tests")}
                 className="flex items-center gap-1.5 text-[10px] font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors group/btn"
               >
-                Read Best Practices 
+                Read Best Practices
                 <ChevronRight className="w-3 h-3 translate-x-0 group-hover/btn:translate-x-0.5 transition-transform" />
               </button>
             </div>
