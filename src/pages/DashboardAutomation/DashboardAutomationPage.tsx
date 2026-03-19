@@ -14,10 +14,13 @@ import {
   History,
   ArrowRight,
   TrendingUp,
+  RefreshCw,
 } from "lucide-react";
-import { StatCard } from "@/components/DashboardAutomation/StatCard";
+import { ReadinessScoreCard } from "@/components/DashboardAutomation/ReadinessScoreCard";
+import { ExecutionSummary } from "@/components/DashboardAutomation/ExecutionSummary";
 import {
   ResponsiveContainer,
+// ... (omitting some lines for brevity but I should include correct context)
   PieChart,
   Pie,
   Cell,
@@ -45,30 +48,41 @@ import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
 const DashboardAutomationPage = () => {
-  const { latest, trend, loading, error, durationTrend, categoriesTrend } =
-    useDashboardData();
+  const {
+    latest,
+    trend,
+    runs,
+    loading,
+    error,
+    durationTrend,
+    categoriesTrend,
+    syncData,
+    isSyncing,
+  } = useDashboardData();
   const navigate = useNavigate();
+  const [statusFilter, setStatusFilter] = React.useState<string | null>(null);
+
+  // Debugging: Log filter changes
+  React.useEffect(() => {
+    if (statusFilter) {
+      console.log("[Dashboard] Active status filter:", statusFilter);
+    }
+  }, [statusFilter]);
 
   const formatDuration = (ms: number) => {
-    if (!ms) return "0s";
-    const seconds = Math.floor(ms / 1000);
-    const minutes = Math.floor(seconds / 60);
-    const hours = Math.floor(minutes / 60);
-    if (hours > 0) return `${hours}h ${minutes % 60}m`;
-    if (minutes > 0) return `${minutes}m ${seconds % 60}s`;
-    return `${seconds}s`;
+    if (!ms || ms === 0) return "0s";
+    if (ms < 1000) return `${ms}ms`;
+    const totalSeconds = Math.floor(ms / 1000);
+    const h = Math.floor(totalSeconds / 3600);
+    const m = Math.floor((totalSeconds % 3600) / 60);
+    const s = totalSeconds % 60;
+    if (h > 0) return `${h}h ${m}m`;
+    if (m > 0) return `${m}m ${s}s`;
+    return `${s}s`;
   };
 
   // Data processing for charts
-  const {
-    failureRate,
-    passFailData,
-    durationDistribution,
-    severityStatusData,
-    statusTrendData,
-    durationTrendData,
-    categoriesTrendData,
-  } = useMemo(() => {
+  const dashboardData = useMemo(() => {
     if (!latest)
       return {
         failureRate: 0,
@@ -78,6 +92,15 @@ const DashboardAutomationPage = () => {
         statusTrendData: [],
         durationTrendData: [],
         categoriesTrendData: [],
+        readinessScore: 0,
+        readinessBreakdown: {
+          passRate: 0,
+          criticalPenalty: 0,
+          brokenPenalty: 0,
+          flakyPenalty: 0,
+          trendBonus: 0,
+        },
+        trendStatus: "stable" as const,
       };
 
     const s = latest.summary;
@@ -180,6 +203,35 @@ const DashboardAutomationPage = () => {
         "Test Defect": c.broken,
       }));
 
+    // Readiness Score Calculation
+    const criticalPenalty = tests.filter(
+      (t: any) =>
+        (t.status === "failed" || t.status === "broken") &&
+        ["critical", "blocker", "high"].includes((t.severity || "").toLowerCase())
+    ).length * 5;
+
+    const brokenPenalty = s.broken * 2;
+    const flakyPenalty = tests.filter((t: any) => t.flaky).length * 1;
+
+    // Trend calculation (last 3 vs previous 3)
+    let trendBonus = 0;
+    let trendStatus: "improving" | "regressing" | "stable" = "stable";
+
+    if (trend.length >= 6) {
+      const recentAvg = (trend[0].summary.passRate + trend[1].summary.passRate + trend[2].summary.passRate) / 3;
+      const prevAvg = (trend[3].summary.passRate + trend[4].summary.passRate + trend[5].summary.passRate) / 3;
+
+      if (recentAvg > prevAvg + 2) {
+        trendBonus = 5;
+        trendStatus = "improving";
+      } else if (recentAvg < prevAvg - 2) {
+        trendBonus = -5;
+        trendStatus = "regressing";
+      }
+    }
+
+    const readinessScore = Math.max(0, Math.min(100, Math.round(s.passRate - criticalPenalty - brokenPenalty - flakyPenalty + trendBonus)));
+
     return {
       failureRate: failRate,
       passFailData: pfData,
@@ -188,8 +240,53 @@ const DashboardAutomationPage = () => {
       statusTrendData: stData,
       durationTrendData: dtData,
       categoriesTrendData: catTrend,
+      readinessScore,
+      readinessBreakdown: {
+        passRate: s.passRate,
+        criticalPenalty,
+        brokenPenalty,
+        flakyPenalty,
+        trendBonus,
+      },
+      trendStatus,
+      insights: {
+        flaky: tests.filter((t: any) => t.flaky).length,
+        newFailures: (() => {
+          if (runs.length < 2) return 0;
+          const latestFailNames = new Set(
+            runs[0].tests
+              ?.filter((t: any) => t.status === "failed")
+              .map((t: any) => t.name) || [],
+          );
+          const prevFailNames = new Set(
+            runs[1].tests
+              ?.filter((t: any) => t.status === "failed")
+              .map((t: any) => t.name) || [],
+          );
+          let count = 0;
+          latestFailNames.forEach((name) => {
+            if (!prevFailNames.has(name)) count++;
+          });
+          return count;
+        })(),
+        infraIssues: s.broken,
+      },
     };
-  }, [latest, trend, durationTrend, categoriesTrend]);
+  }, [latest, trend, durationTrend, categoriesTrend, runs]);
+
+  const {
+    failureRate,
+    passFailData,
+    durationDistribution,
+    severityStatusData,
+    statusTrendData,
+    durationTrendData,
+    categoriesTrendData,
+    readinessScore,
+    readinessBreakdown,
+    trendStatus,
+    insights,
+  } = dashboardData;
 
   if (loading) {
     return (
@@ -233,14 +330,28 @@ const DashboardAutomationPage = () => {
           </p>
         </div>
 
-        {latest && (
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 dark:bg-surface-dark rounded-lg border border-slate-200 dark:border-border-brand">
-            <History className="w-4 h-4 text-slate-400" />
-            <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 truncate">
-              Latest: {dayjs(latest.createdAt).format("MMM DD, HH:mm")}
-            </span>
-          </div>
-        )}
+        <div className="flex items-center gap-3">
+          {latest && (
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 dark:bg-surface-dark rounded-lg border border-slate-200 dark:border-border-brand">
+              <History className="w-4 h-4 text-slate-400" />
+              <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 truncate">
+                Latest: {dayjs(latest.createdAt).format("MMM DD, HH:mm")}
+              </span>
+            </div>
+          )}
+
+          <button
+            onClick={() => syncData()}
+            disabled={isSyncing}
+            className={cn(
+              "flex items-center gap-2 px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg text-[11px] font-bold uppercase tracking-tight transition-all disabled:opacity-50",
+              isSyncing && "animate-pulse"
+            )}
+          >
+            <RefreshCw className={cn("w-3.5 h-3.5", isSyncing && "animate-spin")} />
+            {isSyncing ? "Syncing..." : "Sync Data"}
+          </button>
+        </div>
       </div>
 
       {!latest ? (
@@ -260,100 +371,30 @@ const DashboardAutomationPage = () => {
         </div>
       ) : (
         <div className="space-y-8">
+          {/* Release Readiness Hero */}
+          <ReadinessScoreCard
+            score={readinessScore}
+            breakdown={readinessBreakdown}
+            trend={trendStatus}
+          />
+
           {/* Summary Section */}
-          <div className="flex flex-col lg:flex-row gap-6 items-stretch">
-            <div className="flex-1 flex flex-col gap-4">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 flex-1">
-                <StatCard
-                  icon={<ClipboardList className="w-5 h-5" />}
-                  label="Total"
-                  value={latest.summary.total}
-                  color="brand"
-                />
-                <StatCard
-                  icon={<CheckCircle2 className="w-5 h-5" />}
-                  label="Passed"
-                  value={latest.summary.passed}
-                  color="teal"
-                />
-                <StatCard
-                  icon={<XCircle className="w-5 h-5" />}
-                  label="Failed"
-                  value={latest.summary.failed}
-                  color="red"
-                />
-                <StatCard
-                  icon={<AlertTriangle className="w-5 h-5" />}
-                  label="Broken"
-                  value={latest.summary.broken}
-                  color="yellow"
-                />
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 flex-1">
-                <StatCard
-                  icon={<CheckCircle2 className="w-5 h-5" />}
-                  label="Pass Rate"
-                  value={`${latest.summary.passRate}%`}
-                  color="teal"
-                />
-                <StatCard
-                  icon={<XCircle className="w-5 h-5" />}
-                  label="Failure %"
-                  value={`${failureRate.toFixed(1)}%`}
-                  color="red"
-                />
-                <StatCard
-                  icon={<Clock className="w-5 h-5" />}
-                  label="Duration"
-                  value={formatDuration(latest.summary.duration)}
-                  color="brand"
-                />
-              </div>
-            </div>
+          <ExecutionSummary
+            summary={latest.summary}
+            failureRate={failureRate}
+            formatDuration={formatDuration}
+            passFailData={passFailData}
+            statusFilter={statusFilter}
+            setStatusFilter={setStatusFilter}
+            insights={insights}
+            onInsightClick={(type) => {
+              const filterValue = type === "infraIssues" ? "broken" : type;
+              navigate(`/automation/runs/${latest.runId}?tab=tests&filter=${filterValue}`);
+            }}
+          />
 
-            {/* Pie Chart */}
-            <div className="bg-white dark:bg-surface-card border border-slate-200 dark:border-border-brand rounded-2xl p-6 lg:w-80 flex flex-col items-center justify-center relative overflow-hidden">
-              <div className="absolute top-4 left-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                Pass vs Failure
-              </div>
-              <div className="flex-1 flex flex-col items-center justify-center w-full">
-                <ResponsiveContainer width="100%" height={160}>
-                  <PieChart>
-                    <Pie
-                      data={passFailData}
-                      dataKey="value"
-                      nameKey="name"
-                      innerRadius={45}
-                      outerRadius={70}
-                      paddingAngle={5}
-                      stroke="none"
-                    >
-                      {passFailData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className="flex gap-4 mt-2">
-                  {passFailData.map((item, i) => (
-                    <div key={i} className="flex items-center gap-1.5">
-                      <div
-                        className="w-2 h-2 rounded-full"
-                        style={{ backgroundColor: item.color }}
-                      />
-                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">
-                        {item.name} {item.value.toFixed(1)}%
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Distribution Row */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Duration Distribution */}
+            {/* Duration Distribution - Moved up to fill the row */}
             <div className="bg-white dark:bg-surface-card border border-slate-200 dark:border-border-brand rounded-2xl p-6">
               <div className="flex items-center justify-between mb-6">
                 <div className="space-y-1">
@@ -436,14 +477,46 @@ const DashboardAutomationPage = () => {
                       textTransform: "uppercase",
                     }}
                   />
-                  <Bar dataKey="passed" stackId="sev" fill="#10b981" />
-                  <Bar dataKey="failed" stackId="sev" fill="#ef4444" />
-                  <Bar dataKey="broken" stackId="sev" fill="#f59e0b" />
+                  <Bar 
+                    dataKey="passed" 
+                    stackId="sev" 
+                    fill="#10b981" 
+                    className="cursor-pointer"
+                    onClick={() => {
+                      console.log("[Bar] Clicked Passed");
+                      setStatusFilter(prev => prev === "passed" ? null : "passed");
+                    }}
+                  />
+                  <Bar 
+                    dataKey="failed" 
+                    stackId="sev" 
+                    fill="#ef4444" 
+                    className="cursor-pointer"
+                    onClick={() => {
+                      console.log("[Bar] Clicked Failed");
+                      setStatusFilter(prev => prev === "failed" ? null : "failed");
+                    }}
+                  />
+                  <Bar 
+                    dataKey="broken" 
+                    stackId="sev" 
+                    fill="#f59e0b" 
+                    className="cursor-pointer"
+                    onClick={() => {
+                      console.log("[Bar] Clicked Broken");
+                      setStatusFilter(prev => prev === "broken" ? null : "broken");
+                    }}
+                  />
                   <Bar
                     dataKey="skipped"
                     stackId="sev"
                     fill="#94a3b8"
                     radius={[4, 4, 0, 0]}
+                    className="cursor-pointer"
+                    onClick={() => {
+                      console.log("[Bar] Clicked Skipped");
+                      setStatusFilter(prev => prev === "skipped" ? null : "skipped");
+                    }}
                   />
                 </BarChart>
               </ResponsiveContainer>
@@ -736,12 +809,22 @@ const DashboardAutomationPage = () => {
                   Recent Run History
                 </h3>
               </div>
-              <button
-                onClick={() => navigate("/automation/runs")}
-                className="text-[10px] font-bold text-primary hover:underline flex items-center gap-1"
-              >
-                View All <ArrowRight className="w-3 h-3" />
-              </button>
+              <div className="flex items-center gap-3">
+                {statusFilter && (
+                  <button
+                    onClick={() => setStatusFilter(null)}
+                    className="text-[10px] font-bold text-rose-500 hover:text-rose-600 bg-rose-50 dark:bg-rose-950/20 px-2 py-0.5 rounded-full flex items-center gap-1 transition-all"
+                  >
+                    Clear Filter: {statusFilter.toUpperCase()} <XCircle className="w-2.5 h-2.5" />
+                  </button>
+                )}
+                <button
+                  onClick={() => navigate("/automation/runs")}
+                  className="text-[10px] font-bold text-primary hover:underline flex items-center gap-1"
+                >
+                  View All <ArrowRight className="w-3 h-3" />
+                </button>
+              </div>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
@@ -768,7 +851,16 @@ const DashboardAutomationPage = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50 dark:divide-border-brand/30">
-                  {trend.map((run) => (
+                  {trend
+                    .filter((run) => {
+                      if (!statusFilter) return true;
+                      if (statusFilter === "passed") return run.summary.passed > 0;
+                      if (statusFilter === "failed") return run.summary.failed > 0;
+                      if (statusFilter === "broken") return (run.summary.broken || 0) > 0;
+                      if (statusFilter === "skipped") return (run.summary.skipped || 0) > 0;
+                      return true;
+                    })
+                    .map((run) => (
                     <tr
                       key={run.runId}
                       onClick={() => navigate(`/automation/runs/${run.runId}`)}

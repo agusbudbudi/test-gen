@@ -1,5 +1,6 @@
 import path from 'path';
 import { Run } from './models/Run.js';
+import { Cache } from './models/Cache.js';
 import connectDB from './db.js';
 import { uploadToBlob } from './blobService.js';
 
@@ -51,6 +52,74 @@ export class DataStore {
       .limit(limit)
       .lean();
     return runs;
+  }
+
+  async getCache(key) {
+    await connectDB();
+    return await Cache.findOne({ key }).lean();
+  }
+
+  async setCache(key, data) {
+    await connectDB();
+    await Cache.findOneAndUpdate(
+      { key },
+      { data, updatedAt: new Date() },
+      { upsert: true, new: true }
+    );
+  }
+
+  async syncDashboardCache() {
+    console.log('[Cache] Synchronizing dashboard metrics...');
+    const startTime = Date.now();
+    
+    await connectDB();
+    
+    // 1. Latest Run
+    const latest = await this.getLatestRun();
+    
+    // 2. Trend Data (limit 30)
+    const trend = await this.getTrendData(30);
+    
+    // 3. Suite Breakdown (limit 10)
+    const suites = await this.getSuiteBreakdown(10);
+    
+    // 4. Status Buckets
+    const buckets = aggregateStatusBuckets(trend);
+    
+    // 5. Duration Trend (limit 10)
+    const durations = trend.slice(0, 10).map((run) => ({
+      runId: run.runId,
+      createdAt: run.createdAt,
+      duration: run.summary?.duration || 0,
+    }));
+    
+    // 6. Categories Trend (limit 10)
+    const categories = trend.slice(0, 10).map((run) => ({
+      runId: run.runId,
+      createdAt: run.createdAt,
+      failed: run.summary?.failed || 0,
+      broken: run.summary?.broken || 0,
+      passed: run.summary?.passed || 0,
+    }));
+
+    // 7. Full Runs List (This might be large, but required for the runs page)
+    const runs = await this.getRuns();
+
+    const cacheData = {
+      latest,
+      trend,
+      suites,
+      buckets,
+      durations,
+      categories,
+      runs,
+      lastSync: new Date().toISOString()
+    };
+
+    await this.setCache('dashboard_metrics', cacheData);
+    
+    console.log(`[Cache] Sync completed in ${Date.now() - startTime}ms`);
+    return cacheData;
   }
 
   async getSuiteBreakdown(limit = 10) {
@@ -141,6 +210,12 @@ export class DataStore {
         },
         { upsert: true, new: true }
       );
+
+      // Trigger cache sync in background to keep dashboard updated
+      this.syncDashboardCache().catch(err => 
+        console.error('[Cache] Auto-sync failed after save:', err.message)
+      );
+
       return true;
     } catch (error) {
       console.error('Failed to save to MongoDB:', error.message);
@@ -152,6 +227,7 @@ export class DataStore {
     await connectDB();
     try {
       await Run.deleteMany({});
+      await Cache.deleteMany({}); // Clear cache when history is cleared
       return true;
     } catch (error) {
       console.error('Failed to clear MongoDB collection:', error.message);

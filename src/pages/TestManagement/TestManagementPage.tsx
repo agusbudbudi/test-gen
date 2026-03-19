@@ -506,11 +506,11 @@ const TestManagementPage = () => {
     <div className="flex flex-col h-[calc(100vh-120px)] lg:h-[calc(100vh-64px)] overflow-hidden">
 
       {/* ── Tab Bar ── */}
-      <div className="flex gap-1 mb-4 border-b border-slate-200 dark:border-slate-800">
+      <div className="flex gap-1 mb-4 border-b border-slate-200 dark:border-slate-800 overflow-x-auto no-scrollbar">
         <button
           onClick={() => setActiveTab('testruns')}
           className={cn(
-            'flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors -mb-px',
+            'flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors -mb-px whitespace-nowrap',
             activeTab === 'testruns'
               ? 'border-primary text-primary'
               : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
