@@ -18,31 +18,69 @@ interface TestDetailViewProps {
 }
 
 // ----- Recursive Step Item Component -----
-const StepItem = ({ step, depth = 0, formatDuration }: { step: any; depth?: number; formatDuration: (ms: number) => string }) => {
+const StepItem = ({
+  step,
+  depth = 0,
+  formatDuration,
+}: {
+  step: any;
+  depth?: number;
+  formatDuration: (ms: number) => string;
+}) => {
   const [expanded, setExpanded] = useState(false);
   const hasSubSteps = step.steps && step.steps.length > 0;
-  const statusColor = step.status === "passed" ? "bg-emerald-500" : step.status === "skipped" ? "bg-slate-400" : "bg-rose-500";
-  const statusTextColor = step.status === "passed" ? "text-emerald-600" : step.status === "skipped" ? "text-slate-400" : "text-rose-600";
-  const statusBg = step.status === "passed" ? "bg-emerald-500/10" : step.status === "skipped" ? "bg-slate-500/10" : "bg-rose-500/10";
+  const statusColor =
+    step.status === "passed"
+      ? "bg-emerald-500"
+      : step.status === "skipped"
+        ? "bg-slate-400"
+        : "bg-rose-500";
+  const statusTextColor =
+    step.status === "passed"
+      ? "text-emerald-600"
+      : step.status === "skipped"
+        ? "text-slate-400"
+        : "text-rose-600";
+  const statusBg =
+    step.status === "passed"
+      ? "bg-emerald-500/10"
+      : step.status === "skipped"
+        ? "bg-slate-500/10"
+        : "bg-rose-500/10";
 
   return (
-    <div className={cn("group", depth > 0 && "ml-4 border-l border-slate-100 dark:border-border-brand/30 pl-3")}>
+    <div
+      className={cn(
+        "group",
+        depth > 0 &&
+          "ml-4 border-l border-slate-100 dark:border-border-brand/30 pl-3",
+      )}
+    >
       <div
         className={cn(
           "flex items-start gap-2 py-1.5 rounded-lg px-2 -mx-2 hover:bg-slate-50 dark:hover:bg-primary/5 transition-colors",
-          hasSubSteps && "cursor-pointer"
+          hasSubSteps && "cursor-pointer",
         )}
         onClick={() => hasSubSteps && setExpanded(!expanded)}
       >
         {/* Status dot */}
-        <span className={cn("w-1.5 h-1.5 rounded-full mt-1.5 shrink-0", statusColor)} />
+        <span
+          className={cn(
+            "w-1.5 h-1.5 rounded-full mt-1.5 shrink-0",
+            statusColor,
+          )}
+        />
 
         {/* Toggle icon */}
         {hasSubSteps ? (
-          expanded
-            ? <ChevronDown className="w-3 h-3 shrink-0 mt-1 text-slate-400" />
-            : <ChevronRight className="w-3 h-3 shrink-0 mt-1 text-slate-400" />
-        ) : <span className="w-3" />}
+          expanded ? (
+            <ChevronDown className="w-3 h-3 shrink-0 mt-1 text-slate-400" />
+          ) : (
+            <ChevronRight className="w-3 h-3 shrink-0 mt-1 text-slate-400" />
+          )
+        ) : (
+          <span className="w-3" />
+        )}
 
         {/* Content */}
         <div className="flex-1 min-w-0">
@@ -50,7 +88,13 @@ const StepItem = ({ step, depth = 0, formatDuration }: { step: any; depth?: numb
             <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 leading-tight break-words">
               {step.name}
             </span>
-            <span className={cn("text-[9px] font-bold tabular-nums shrink-0 lowercase tracking-normal px-1 py-0.5 rounded", statusBg, statusTextColor)}>
+            <span
+              className={cn(
+                "text-[9px] font-bold tabular-nums shrink-0 lowercase tracking-normal px-1 py-0.5 rounded",
+                statusBg,
+                statusTextColor,
+              )}
+            >
               {step.duration != null ? formatDuration(step.duration) : "—"}
             </span>
           </div>
@@ -66,7 +110,10 @@ const StepItem = ({ step, depth = 0, formatDuration }: { step: any; depth?: numb
           {step.parameters && step.parameters.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-1">
               {step.parameters.map((p: any, i: number) => (
-                <span key={i} className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-[9px] font-mono text-slate-500 dark:text-slate-400">
+                <span
+                  key={i}
+                  className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-[9px] font-mono text-slate-500 dark:text-slate-400"
+                >
                   {p.name}: <span className="text-primary">{p.value}</span>
                 </span>
               ))}
@@ -79,7 +126,12 @@ const StepItem = ({ step, depth = 0, formatDuration }: { step: any; depth?: numb
       {hasSubSteps && expanded && (
         <div className="mt-1 space-y-0.5">
           {step.steps.map((sub: any, i: number) => (
-            <StepItem key={i} step={sub} depth={depth + 1} formatDuration={formatDuration} />
+            <StepItem
+              key={i}
+              step={sub}
+              depth={depth + 1}
+              formatDuration={formatDuration}
+            />
           ))}
         </div>
       )}
@@ -89,14 +141,32 @@ const StepItem = ({ step, depth = 0, formatDuration }: { step: any; depth?: numb
 
 // ----- Execution Steps Section Component -----
 const sectionMeta: Record<string, { label: string; color: string }> = {
-  setUp: { label: "Set Up", color: "text-sky-600 border-sky-200 dark:border-sky-800/50 bg-sky-50 dark:bg-sky-950/20" },
-  testBody: { label: "Test Body", color: "text-violet-600 border-violet-200 dark:border-violet-800/50 bg-violet-50 dark:bg-violet-950/20" },
-  tearDown: { label: "Tear Down", color: "text-slate-500 border-slate-200 dark:border-border-brand bg-slate-50 dark:bg-surface-dark" },
+  setUp: {
+    label: "Set Up",
+    color:
+      "text-sky-600 border-sky-200 dark:border-sky-800/50 bg-sky-50 dark:bg-sky-950/20",
+  },
+  testBody: {
+    label: "Test Body",
+    color:
+      "text-violet-600 border-violet-200 dark:border-violet-800/50 bg-violet-50 dark:bg-violet-950/20",
+  },
+  tearDown: {
+    label: "Tear Down",
+    color:
+      "text-slate-500 border-slate-200 dark:border-border-brand bg-slate-50 dark:bg-surface-dark",
+  },
 };
 
-const ExecutionStepsSection = ({ executionInfo, formatDuration }: { executionInfo: any; formatDuration: (ms: number) => string }) => {
+const ExecutionStepsSection = ({
+  executionInfo,
+  formatDuration,
+}: {
+  executionInfo: any;
+  formatDuration: (ms: number) => string;
+}) => {
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
-    () => new Set(["testBody"])
+    () => new Set(["testBody"]),
   );
 
   const toggle = (section: string) => {
@@ -109,27 +179,45 @@ const ExecutionStepsSection = ({ executionInfo, formatDuration }: { executionInf
 
   return (
     <div className="space-y-2">
-      <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Execution Steps</h3>
+      <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+        Execution Steps
+      </h3>
       <div className="space-y-2">
         {["setUp", "testBody", "tearDown"].map((section) => {
           const steps = executionInfo[section] || [];
           if (steps.length === 0) return null;
           const meta = sectionMeta[section];
           const isOpen = expandedSections.has(section);
-          const totalDuration = steps.reduce((acc: number, s: any) => acc + (s.duration ?? 0), 0);
-          const failedCount = steps.filter((s: any) => s.status !== "passed" && s.status !== "skipped").length;
+          const totalDuration = steps.reduce(
+            (acc: number, s: any) => acc + (s.duration ?? 0),
+            0,
+          );
+          const failedCount = steps.filter(
+            (s: any) => s.status !== "passed" && s.status !== "skipped",
+          ).length;
 
           return (
-            <div key={section} className={cn("border rounded-xl overflow-hidden", meta.color)}>
+            <div
+              key={section}
+              className={cn("border rounded-xl overflow-hidden", meta.color)}
+            >
               {/* Section Header */}
               <button
                 onClick={() => toggle(section)}
                 className="w-full flex items-center justify-between px-3 py-2 gap-2"
               >
                 <div className="flex items-center gap-2">
-                  {isOpen ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
-                  <span className="text-[11px] font-black uppercase tracking-widest">{meta.label}</span>
-                  <span className="text-[9px] font-bold opacity-60">{steps.length} step{steps.length !== 1 ? "s" : ""}</span>
+                  {isOpen ? (
+                    <ChevronDown className="w-3.5 h-3.5" />
+                  ) : (
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  )}
+                  <span className="text-[11px] font-black uppercase tracking-widest">
+                    {meta.label}
+                  </span>
+                  <span className="text-[9px] font-bold opacity-60">
+                    {steps.length} step{steps.length !== 1 ? "s" : ""}
+                  </span>
                   {failedCount > 0 && (
                     <span className="px-1 py-0.5 text-[9px] font-black bg-rose-500/10 text-rose-600 rounded">
                       {failedCount} failed
@@ -145,7 +233,12 @@ const ExecutionStepsSection = ({ executionInfo, formatDuration }: { executionInf
               {isOpen && (
                 <div className="px-3 pb-3 space-y-0.5 border-t border-inherit bg-white dark:bg-surface-card">
                   {steps.map((step: any, i: number) => (
-                    <StepItem key={i} step={step} depth={0} formatDuration={formatDuration} />
+                    <StepItem
+                      key={i}
+                      step={step}
+                      depth={0}
+                      formatDuration={formatDuration}
+                    />
                   ))}
                 </div>
               )}
@@ -156,7 +249,6 @@ const ExecutionStepsSection = ({ executionInfo, formatDuration }: { executionInf
     </div>
   );
 };
-
 
 export const TestDetailView = ({ test }: TestDetailViewProps) => {
   if (!test) {
@@ -230,7 +322,9 @@ export const TestDetailView = ({ test }: TestDetailViewProps) => {
           <div className="flex flex-wrap items-center gap-4 text-[10px] font-bold uppercase tracking-widest">
             <div className="flex items-center gap-1.5 text-slate-400">
               <Clock className="w-3 h-3" />
-              <span className="lowercase tracking-normal">{formatDuration(test.duration)}</span>
+              <span className="lowercase tracking-normal">
+                {formatDuration(test.duration)}
+              </span>
             </div>
             {test.severity && (
               <div className="flex items-center gap-1.5 text-primary">
@@ -267,30 +361,31 @@ export const TestDetailView = ({ test }: TestDetailViewProps) => {
         <div className="h-px bg-slate-100 dark:bg-border-brand/30" />
 
         {/* Status Details (Error) */}
-        {test.statusDetails && (test.statusDetails.message || test.statusDetails.trace) && (
-          <div className="space-y-3">
-            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-              <AlertTriangle className="w-3 h-3" />
-              Failure Details
-            </h3>
-            <div className="bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/50 rounded-xl p-4 overflow-hidden">
-              <p className="text-xs font-mono font-medium text-rose-600 dark:text-rose-400 whitespace-pre-wrap break-all leading-relaxed">
-                {test.statusDetails.message || "No error message provided."}
-              </p>
-              {test.statusDetails.trace && (
-                <details className="mt-4 group">
-                  <summary className="text-[9px] font-black text-rose-400 dark:text-rose-600 cursor-pointer list-none flex items-center gap-1 hover:text-rose-500">
-                    <ChevronRight className="w-3 h-3 group-open:rotate-90 transition-transform" />
-                    VIEW STACK TRACE
-                  </summary>
-                  <pre className="mt-3 p-3 bg-white dark:bg-sidebar-bg/50 rounded-lg text-[10px] font-mono text-slate-500 dark:text-slate-400 overflow-x-auto border border-rose-100/50 dark:border-border-brand/20">
-                    {test.statusDetails.trace}
-                  </pre>
-                </details>
-              )}
+        {test.statusDetails &&
+          (test.statusDetails.message || test.statusDetails.trace) && (
+            <div className="space-y-3">
+              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                <AlertTriangle className="w-3 h-3" />
+                Failure Details
+              </h3>
+              <div className="bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/50 rounded-xl p-4 overflow-hidden">
+                <p className="text-xs font-mono font-medium text-rose-600 dark:text-rose-400 whitespace-pre-wrap break-all leading-relaxed">
+                  {test.statusDetails.message || "No error message provided."}
+                </p>
+                {test.statusDetails.trace && (
+                  <details className="mt-4 group">
+                    <summary className="text-[9px] font-black text-rose-400 dark:text-rose-600 cursor-pointer list-none flex items-center gap-1 hover:text-rose-500">
+                      <ChevronRight className="w-3 h-3 group-open:rotate-90 transition-transform" />
+                      VIEW STACK TRACE
+                    </summary>
+                    <pre className="mt-3 p-3 bg-white dark:bg-sidebar-bg/50 rounded-lg text-[10px] font-mono text-slate-500 dark:text-slate-400 overflow-x-auto border border-rose-100/50 dark:border-border-brand/20">
+                      {test.statusDetails.trace}
+                    </pre>
+                  </details>
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
         {/* Parameters */}
         {test.parameters && test.parameters.length > 0 && (
@@ -328,9 +423,15 @@ export const TestDetailView = ({ test }: TestDetailViewProps) => {
         )}
 
         {/* Execution Info / Steps */}
-        {test.executionInfo && (["setUp", "testBody", "tearDown"].some((s) => (test.executionInfo[s] || []).length > 0)) && (
-          <ExecutionStepsSection executionInfo={test.executionInfo} formatDuration={formatDuration} />
-        )}
+        {test.executionInfo &&
+          ["setUp", "testBody", "tearDown"].some(
+            (s) => (test.executionInfo[s] || []).length > 0,
+          ) && (
+            <ExecutionStepsSection
+              executionInfo={test.executionInfo}
+              formatDuration={formatDuration}
+            />
+          )}
 
         {/* Attachments */}
         {test.attachments && test.attachments.length > 0 && (
@@ -341,7 +442,9 @@ export const TestDetailView = ({ test }: TestDetailViewProps) => {
             </h3>
             <div className="grid grid-cols-1 gap-3">
               {test.attachments.map((att: any, idx: number) => {
-                const src = `/api/allure-results/${att.source}`;
+                const src = att.source?.startsWith("http")
+                  ? att.source
+                  : `/api/allure-results/${att.source}`;
                 const isImage = att.type?.startsWith("image/");
 
                 if (isImage) {

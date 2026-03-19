@@ -1,16 +1,39 @@
-import React from 'react';
-import { useDashboardData } from '@/hooks/useDashboardData';
-import { Activity, Loader2, AlertCircle, History, ArrowRight, Trash2 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import dayjs from 'dayjs';
+import React from "react";
+import { useDashboardData } from "@/hooks/useDashboardData";
+import {
+  Activity,
+  Loader2,
+  AlertCircle,
+  History,
+  ArrowRight,
+  Trash2,
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import dayjs from "dayjs";
 import { cn } from "@/lib/utils";
+
+const formatDuration = (ms: number) => {
+  if (!ms || ms === 0) return "0s";
+  if (ms < 1000) return `${ms}ms`;
+  const totalSeconds = Math.floor(ms / 1000);
+  const h = Math.floor(totalSeconds / 3600);
+  const m = Math.floor((totalSeconds % 3600) / 60);
+  const s = totalSeconds % 60;
+  if (h > 0) return `${h}h ${m}m`;
+  if (m > 0) return `${m}m ${s}s`;
+  return `${s}s`;
+};
 
 const AutomationRunsPage = () => {
   const { runs, loading, error, clearHistory } = useDashboardData();
   const navigate = useNavigate();
 
   const handleClearHistory = async () => {
-    if (window.confirm("Are you sure you want to delete ALL automation run history? This action cannot be undone.")) {
+    if (
+      window.confirm(
+        "Are you sure you want to delete ALL automation run history? This action cannot be undone.",
+      )
+    ) {
       const success = await clearHistory();
       if (success) {
         alert("Automation history cleared successfully.");
@@ -50,7 +73,7 @@ const AutomationRunsPage = () => {
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex flex-col">
-          <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+          <h1 className="text-lg font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
             <Activity className="w-6 h-6 text-primary" />
             Automation Run History
           </h1>
@@ -74,24 +97,41 @@ const AutomationRunsPage = () => {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/50 dark:bg-sidebar-bg/50 border-b border-slate-100 dark:border-border-brand">
-                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Date & Time</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Run ID</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest text-center">Total</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest text-center">Passed</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest text-center">Failed</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest text-right">Pass Rate</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest text-right">Actions</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+                  Date & Time
+                </th>
+                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+                  Run ID
+                </th>
+                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest text-center">
+                  Total
+                </th>
+                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest text-center">
+                  Passed
+                </th>
+                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest text-center">
+                  Failed
+                </th>
+                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest text-center">
+                  Duration
+                </th>
+                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest text-right">
+                  Pass Rate
+                </th>
+                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest text-right">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50 dark:divide-border-brand/30">
               {runs.map((run) => (
-                <tr 
-                  key={run.runId} 
+                <tr
+                  key={run.runId}
                   className="hover:bg-slate-50/50 dark:hover:bg-primary/5 transition-colors group cursor-pointer"
                   onClick={() => navigate(`/automation/runs/${run.runId}`)}
                 >
                   <td className="px-6 py-4 text-xs font-medium text-slate-600 dark:text-slate-300">
-                    {dayjs(run.createdAt).format('MMM DD, YYYY HH:mm')}
+                    {dayjs(run.createdAt).format("MMM DD, YYYY HH:mm")}
                   </td>
                   <td className="px-6 py-4">
                     <span className="px-2 py-1 bg-slate-100 dark:bg-surface-dark border border-slate-200 dark:border-border-brand rounded text-[10px] font-bold text-slate-500 dark:text-slate-400 font-mono">
@@ -107,13 +147,20 @@ const AutomationRunsPage = () => {
                   <td className="px-6 py-4 text-xs font-bold text-rose-600 dark:text-rose-400 text-center">
                     {run.summary.failed}
                   </td>
+                  <td className="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 text-center">
+                    {formatDuration(run.summary.duration)}
+                  </td>
                   <td className="px-6 py-4 text-right">
-                    <div className={cn(
-                      "inline-flex px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-tighter",
-                      run.summary.passRate >= 90 ? "bg-emerald-500/10 text-emerald-600" :
-                      run.summary.passRate >= 70 ? "bg-amber-500/10 text-amber-600" :
-                      "bg-rose-500/10 text-rose-600"
-                    )}>
+                    <div
+                      className={cn(
+                        "inline-flex px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-tighter",
+                        run.summary.passRate >= 90
+                          ? "bg-emerald-500/10 text-emerald-600"
+                          : run.summary.passRate >= 70
+                            ? "bg-amber-500/10 text-amber-600"
+                            : "bg-rose-500/10 text-rose-600",
+                      )}
+                    >
                       {run.summary.passRate}%
                     </div>
                   </td>

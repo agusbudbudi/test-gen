@@ -422,6 +422,10 @@ app.post("/api/dashboard/webhook", async (req, res) => {
     res.status(500).json({ error: "Failed to save result" });
   }
 });
+// Serve Allure Results (Screenshots/Attachments)
+const ALLURE_RESULTS_DIR = process.env.ALLURE_RESULTS_DIR || "/Users/agudbudiman/Documents/automation-diricare/healthapp-web-automation/allure-results";
+app.use('/api/allure-results', express.static(ALLURE_RESULTS_DIR));
+
 const distDir = path.join(__dirname, "..", "dist");
 // Vercel handles static serving via rewrites in vercel.json, 
 // but keeping this for local development if needed.
