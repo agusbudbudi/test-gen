@@ -9,6 +9,7 @@ import {
   ChevronRight,
   Info,
   FolderOpen,
+  Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import dayjs from "dayjs";
@@ -317,6 +318,11 @@ export const TestDetailView = ({ test }: TestDetailViewProps) => {
             >
               {test.status}
             </div>
+            {test.flaky && (
+              <div className="shrink-0 px-2 py-1 rounded text-[10px] font-black uppercase tracking-tighter bg-amber-500/10 text-amber-600 flex items-center gap-1">
+                <Zap size={10} /> FLAKY
+              </div>
+            )}
           </div>
 
           <div className="flex flex-wrap items-center gap-4 text-[10px] font-bold uppercase tracking-widest">

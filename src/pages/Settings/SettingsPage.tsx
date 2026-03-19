@@ -153,12 +153,12 @@ const SettingsPage = () => {
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Tab Sidebar */}
         <div className="lg:w-48 flex-shrink-0">
-          <nav className="flex lg:flex-col gap-1">
+          <nav className="flex lg:flex-col gap-1 overflow-x-auto no-scrollbar">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2.5 px-4 py-2.5 rounded-lg text-sm font-medium transition-all w-full text-left ${
+                className={`flex items-center gap-2.5 px-4 py-2.5 rounded-lg text-sm font-medium transition-all w-full text-left whitespace-nowrap ${
                   activeTab === tab.id
                     ? "bg-primary/10 text-primary dark:bg-primary/15"
                     : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-primary/10 hover:text-slate-900 dark:hover:text-slate-200"

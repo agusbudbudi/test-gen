@@ -64,6 +64,37 @@
   .card-base {
     @apply bg-surface-card dark:bg-surface-card border border-border-brand dark:border-border-brand rounded-2xl shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.4)] transition-all;
   }
+  .btn-ai-hollow {
+    @apply relative bg-transparent transition-all duration-300;
+  }
+  .btn-ai-hollow::before {
+    content: "";
+    @apply absolute inset-0 -z-10 rounded-[inherit] transition-opacity duration-300;
+    padding: 1.5px; 
+    background: linear-gradient(135deg, #6366f1 0%, #a855f7 35%, #f97316 65%, #6366f1 100%);
+    background-size: 200% auto;
+    animation: ai-shimmer 4s linear infinite;
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+  }
+  .btn-ai-hollow:hover::before {
+    @apply opacity-70;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+@keyframes ai-shimmer {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
 @keyframes slide-up {

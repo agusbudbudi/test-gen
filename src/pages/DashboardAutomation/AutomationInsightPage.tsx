@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { useDashboardData } from "@/hooks/useDashboardData";
+import { useDashboardStore } from "@/stores/dashboardStore";
 import { useNavigate } from "react-router-dom";
 import {
   BarChart3,
@@ -13,8 +14,9 @@ import {
   CheckCircle2,
   TrendingUp,
   AlertCircle,
-  XCircle,
   Zap,
+  RefreshCw,
+  Bug,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -29,28 +31,41 @@ import {
   Legend,
   Cell,
 } from "recharts";
-import { StatCard } from "@/components/DashboardAutomation/StatCard";
 import { useUIStore } from "@/stores/uiStore";
 import { fetchChat } from "@/lib/api";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { useToast } from "@/hooks/useToast";
 import { cn } from "@/lib/utils";
 
 const AutomationInsightPage = () => {
   const navigate = useNavigate();
-  const { latest, trend, suites, statusBuckets, loading, error } =
-    useDashboardData();
+  const {
+    latest,
+    trend,
+    suites,
+    statusBuckets,
+    loading,
+    error,
+    syncData,
+    isSyncing,
+  } = useDashboardData();
+  const { aiInsights, aiSuggestions, aiAssessment, aiRootCause, setAIResults } =
+    useDashboardStore();
   const { apiKey, selectedModel } = useUIStore();
+  const toast = useToast();
 
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<
-    "insights" | "suggestions" | "assessment"
+    "insights" | "suggestions" | "assessment" | "rootCause"
   >("insights");
 
-  const [insights, setInsights] = useState<string>("");
-  const [suggestions, setSuggestions] = useState<string>("");
-  const [assessment, setAssessment] = useState<string>("");
+  // These are now handled by the store, but I keep the local names for minimal diff
+  const insights = aiInsights;
+  const suggestions = aiSuggestions;
+  const assessment = aiAssessment;
+  const rootCause = aiRootCause;
 
   // Calculate top failing tests from latest run
   const topFailingTests = useMemo(() => {
@@ -80,6 +95,22 @@ const AutomationInsightPage = () => {
           .slice(0, 7)
           .map((r) => ({ date: r.createdAt, passRate: r.summary.passRate })),
         dailyBreakdown: statusBuckets.slice(-7),
+        failures: latest?.tests
+          ?.filter((t: any) => t.status === "failed" || t.status === "broken")
+          .slice(0, 5) // Send top 5 failures with stack traces
+          .map((t: any) => ({
+            name: t.name,
+            suite: t.suite,
+            error:
+              t.statusDetails?.message ||
+              t.error?.message ||
+              t.error ||
+              "No error message provided",
+            stack:
+              t.statusDetails?.trace ||
+              t.error?.stack ||
+              "No stack trace provided",
+          })),
       };
 
       const prompt = `
@@ -110,6 +141,12 @@ const AutomationInsightPage = () => {
         - Categorize the risk level (Low, Medium, High, Critical).
         - Provide a Markdown Table with columns: Category, Status, Observation.
         - End with a one-sentence "**Architect's Verdict**".
+
+        ===ROOTCAUSE===
+        Provide a deep dive into the provided failures.
+        - Group identical/similar errors together 🔍.
+        - Explain the likely "True Root Cause" (e.g., Environment issue, API timeout, Code regression, Flaky selector) 💡.
+        - For each group, provide a clear "Recommended Action" for the engineer 🛠️.
       `;
 
       const response = await fetchChat(
@@ -135,28 +172,33 @@ const AutomationInsightPage = () => {
         /===SUGGESTIONS===\s*([\s\S]*?)(?====INSIGHTS===|===ASSESSMENT===|$)/,
       );
       const assessmentMatch = content.match(
-        /===ASSESSMENT===\s*([\s\S]*?)(?====INSIGHTS===|===SUGGESTIONS===|$)/,
+        /===ASSESSMENT===\s*([\s\S]*?)(?====INSIGHTS===|===SUGGESTIONS===|===ROOTCAUSE===|$)/,
+      );
+      const rootCauseMatch = content.match(
+        /===ROOTCAUSE===\s*([\s\S]*?)(?====INSIGHTS===|===SUGGESTIONS===|===ASSESSMENT===|$)/,
       );
 
-      setInsights(
-        insightsMatch
+      setAIResults({
+        insights: insightsMatch
           ? insightsMatch[1].trim()
           : "Failed to generate insights.",
-      );
-      setSuggestions(
-        suggestionsMatch
+        suggestions: suggestionsMatch
           ? suggestionsMatch[1].trim()
           : "Failed to generate suggestions.",
-      );
-      setAssessment(
-        assessmentMatch
+        assessment: assessmentMatch
           ? assessmentMatch[1].trim()
           : "Failed to generate assessment.",
-      );
+        rootCause: rootCauseMatch
+          ? rootCauseMatch[1].trim()
+          : "No root cause analysis generated.",
+      });
+
+      toast.success("AI Analysis generated successfully!");
     } catch (err: any) {
-      setAiError(
-        err.message || "An unexpected error occurred during AI generation.",
-      );
+      const msg =
+        err.message || "An unexpected error occurred during AI generation.";
+      setAiError(msg);
+      toast.error(msg);
     } finally {
       setAiLoading(false);
     }
@@ -218,57 +260,289 @@ const AutomationInsightPage = () => {
           </p>
         </div>
 
-        <button
-          onClick={generateAIInsights}
-          disabled={aiLoading}
-          className="flex items-center gap-2 px-5 py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-bold text-xs uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50"
-        >
-          {aiLoading ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <Sparkles className="w-4 h-4" />
-          )}
-          {insights ? "Regenerate Analysis" : "Run AI Analysis"}
-        </button>
-      </div>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => syncData()}
+            disabled={isSyncing}
+            className={cn(
+              "flex items-center gap-2 px-5 py-2.5 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg font-bold text-xs uppercase tracking-widest transition-all disabled:opacity-50",
+              isSyncing && "animate-pulse",
+            )}
+          >
+            <RefreshCw className={cn("w-4 h-4", isSyncing && "animate-spin")} />
+            {isSyncing ? "Syncing..." : "Sync Data"}
+          </button>
 
-      {/* Metrics Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          icon={<TrendingUp className="w-5 h-5" />}
-          label="Pass Rate"
-          value={`${latest?.summary.passRate.toFixed(1)}%`}
-          color="teal"
-        />
-        <StatCard
-          icon={<XCircle className="w-5 h-5" />}
-          label="Failure Rate"
-          value={`${(100 - (latest?.summary.passRate || 0)).toFixed(1)}%`}
-          color="red"
-        />
-        <StatCard
-          icon={<Zap className="w-5 h-5" />}
-          label="Total Tests"
-          value={latest?.summary.total || 0}
-          color="brand"
-        />
-        <StatCard
-          icon={<Clock className="w-5 h-5" />}
-          label="Avg Duration"
-          value={
-            latest?.summary.duration
-              ? formatDuration(
-                  latest.summary.duration / (latest.summary.total || 1),
-                )
-              : "0s"
-          }
-          color="purple"
-        />
+          <button
+            onClick={generateAIInsights}
+            disabled={aiLoading}
+            className={cn(
+              "flex items-center gap-2 px-5 py-2.5 rounded-lg font-bold text-xs uppercase tracking-widest transition-all disabled:opacity-50",
+              "btn-ai-hollow text-slate-800 dark:text-white shadow-sm hover:scale-[1.02] active:scale-95",
+            )}
+          >
+            {aiLoading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Sparkles className="w-4 h-4 text-primary" />
+            )}
+            {insights ? "Regenerate Analysis" : "Run AI Analysis"}
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
         {/* Main Charts Area */}
         <div className="xl:col-span-2 space-y-8">
+          {/* AI Panel */}
+          <div className="bg-white dark:bg-surface-card border border-slate-200 dark:border-border-brand rounded-2xl overflow-hidden">
+            <div className="flex gap-1 px-4 pt-1 border-b border-slate-200 dark:border-slate-800 overflow-x-auto no-scrollbar">
+              <button
+                onClick={() => setActiveTab("insights")}
+                className={cn(
+                  "flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-colors -mb-px whitespace-nowrap",
+                  activeTab === "insights"
+                    ? "border-primary text-primary"
+                    : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200",
+                )}
+              >
+                <Sparkles size={14} />
+                Insights
+              </button>
+              <button
+                onClick={() => setActiveTab("suggestions")}
+                className={cn(
+                  "flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-colors -mb-px",
+                  activeTab === "suggestions"
+                    ? "border-primary text-primary"
+                    : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200",
+                )}
+              >
+                <Lightbulb size={14} />
+                Suggestions
+              </button>
+              <button
+                onClick={() => setActiveTab("assessment")}
+                className={cn(
+                  "flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-colors -mb-px",
+                  activeTab === "assessment"
+                    ? "border-primary text-primary"
+                    : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200",
+                )}
+              >
+                <ClipboardCheck size={14} />
+                Assessment
+              </button>
+              <button
+                onClick={() => setActiveTab("rootCause")}
+                className={cn(
+                  "flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-colors -mb-px whitespace-nowrap",
+                  activeTab === "rootCause"
+                    ? "border-primary text-primary"
+                    : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200",
+                )}
+              >
+                <Bug size={14} />
+                Root Cause
+              </button>
+            </div>
+
+            <div className="p-6 min-h-[300px] relative">
+              {aiLoading && (
+                <div className="absolute inset-0 bg-white/20 dark:bg-surface-card/20 backdrop-blur-[2px] z-10 flex items-center justify-center">
+                  <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] animate-pulse">
+                    Analyzing Data...
+                  </p>
+                </div>
+              )}
+
+              {aiError && (
+                <div className="bg-rose-500/10 border border-rose-500/20 p-4 rounded-2xl flex items-center gap-3 text-rose-600 mb-6">
+                  <AlertCircle className="w-5 h-5" />
+                  <p className="text-xs font-bold uppercase tracking-tight">
+                    {aiError}
+                  </p>
+                </div>
+              )}
+
+              {!insights && !aiLoading && (
+                <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-indigo-500/[0.03] via-primary/[0.03] to-amber-500/[0.03] p-4 md:p-8">
+                  {/* Decorative Elements */}
+                  <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/4 w-48 h-48 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
+                  <div className="absolute bottom-0 left-0 translate-y-1/2 -translate-x-1/4 w-48 h-48 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
+
+                  <div className="relative z-10 flex flex-col items-center text-center max-w-xl mx-auto">
+                    <div className="w-12 h-12 bg-white dark:bg-sidebar-bg rounded-full shadow-sm border border-slate-100 dark:border-border-brand flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                      <Sparkles className="w-6 h-6 text-primary" />
+                    </div>
+
+                    <h3 className="text-lg md:text-xl font-bold text-slate-900 dark:text-white tracking-tight mb-2">
+                      Unlock Strategic AI Insights
+                    </h3>
+
+                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium leading-relaxed mb-6">
+                      Transform raw test results into actionable intelligence.
+                      Our AI architect analyzes trends and identifies hidden
+                      risks to optimize your release quality.
+                    </p>
+
+                    <button
+                      onClick={generateAIInsights}
+                      className={cn(
+                        "flex items-center gap-2 px-6 py-2.5 rounded-lg font-bold text-[11px] uppercase tracking-widest transition-all",
+                        "bg-primary text-white shadow-lg shadow-primary/20 hover:shadow-primary/40 hover:scale-[1.02] active:scale-95",
+                        "relative overflow-hidden group/btn",
+                      )}
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                      Generate AI Analysis
+                      <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover/btn:translate-x-[100%] transition-transform duration-700 ease-in-out" />
+                    </button>
+
+                    <div className="mt-6 flex items-center gap-4 grayscale opacity-50">
+                      <div className="flex items-center gap-1.5">
+                        <TrendingUp size={12} className="text-emerald-500" />
+                        <span className="text-[9px] font-bold uppercase tracking-wider">
+                          Trend Analysis
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <AlertTriangle size={12} className="text-amber-500" />
+                        <span className="text-[9px] font-bold uppercase tracking-wider">
+                          Risk Detection
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <Zap size={12} className="text-primary" />
+                        <span className="text-[9px] font-bold uppercase tracking-wider">
+                          Smart Suggestions
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="prose prose-slate dark:prose-invert max-w-none">
+                {activeTab === "insights" && insights && (
+                  <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      components={{
+                        p: ({ node, ...props }) => (
+                          <p
+                            className="text-sm leading-relaxed font-medium text-slate-600 dark:text-slate-300 mb-4"
+                            {...props}
+                          />
+                        ),
+                      }}
+                    >
+                      {insights}
+                    </ReactMarkdown>
+                  </div>
+                )}
+                {activeTab === "suggestions" && suggestions && (
+                  <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      components={{
+                        p: ({ node, ...props }) => (
+                          <p
+                            className="text-sm leading-relaxed font-medium text-slate-600 dark:text-slate-300 mb-4"
+                            {...props}
+                          />
+                        ),
+                        li: ({ node, ...props }) => (
+                          <li
+                            className="text-sm font-medium text-slate-600 dark:text-slate-300 mb-2"
+                            {...props}
+                          />
+                        ),
+                      }}
+                    >
+                      {suggestions}
+                    </ReactMarkdown>
+                  </div>
+                )}
+                {activeTab === "assessment" && assessment && (
+                  <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      components={{
+                        h3: ({ node, ...props }) => (
+                          <div className="flex items-center gap-3 mb-6 p-4 bg-primary/5 rounded-xl border border-primary/10">
+                            <Sparkles className="w-5 h-5 text-primary" />
+                            <h3
+                              className="text-lg font-bold text-primary m-0"
+                              {...props}
+                            />
+                          </div>
+                        ),
+                        table: ({ node, ...props }) => (
+                          <div className="overflow-hidden border border-slate-200 dark:border-border-brand rounded-xl mb-4">
+                            <table
+                              className="min-w-full divide-y divide-slate-200 dark:divide-border-brand m-0"
+                              {...props}
+                            />
+                          </div>
+                        ),
+                        thead: ({ node, ...props }) => (
+                          <thead
+                            className="bg-slate-50 dark:bg-surface-dark"
+                            {...props}
+                          />
+                        ),
+                        th: ({ node, ...props }) => (
+                          <th
+                            className="px-4 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-widest"
+                            {...props}
+                          />
+                        ),
+                        td: ({ node, ...props }) => (
+                          <td
+                            className="px-4 py-3 text-xs font-medium text-slate-600 dark:text-slate-300 border-t border-slate-100 dark:border-border-brand/50"
+                            {...props}
+                          />
+                        ),
+                      }}
+                    >
+                      {assessment}
+                    </ReactMarkdown>
+                  </div>
+                )}
+                {activeTab === "rootCause" && rootCause && (
+                  <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      components={{
+                        p: ({ node, ...props }) => (
+                          <p
+                            className="text-sm leading-relaxed font-medium text-slate-600 dark:text-slate-300 mb-4"
+                            {...props}
+                          />
+                        ),
+                        li: ({ node, ...props }) => (
+                          <li
+                            className="text-sm font-medium text-slate-600 dark:text-slate-300 mb-2"
+                            {...props}
+                          />
+                        ),
+                        blockquote: ({ node, ...props }) => (
+                          <blockquote
+                            className="text-xs italic border-l-4 border-primary/20 pl-4 py-1 text-slate-500 my-4"
+                            {...props}
+                          />
+                        ),
+                      }}
+                    >
+                      {rootCause}
+                    </ReactMarkdown>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
           {/* Charts Row */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Failing Suites */}
@@ -401,177 +675,6 @@ const AutomationInsightPage = () => {
                     />
                   </LineChart>
                 </ResponsiveContainer>
-              </div>
-            </div>
-          </div>
-
-          {/* AI Panel */}
-          <div className="bg-white dark:bg-surface-card border border-slate-200 dark:border-border-brand rounded-2xl overflow-hidden">
-            <div className="flex gap-1 px-4 pt-1 border-b border-slate-200 dark:border-slate-800">
-              <button
-                onClick={() => setActiveTab("insights")}
-                className={cn(
-                  "flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-colors -mb-px",
-                  activeTab === "insights"
-                    ? "border-primary text-primary"
-                    : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200",
-                )}
-              >
-                <Sparkles size={14} />
-                Insights
-              </button>
-              <button
-                onClick={() => setActiveTab("suggestions")}
-                className={cn(
-                  "flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-colors -mb-px",
-                  activeTab === "suggestions"
-                    ? "border-primary text-primary"
-                    : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200",
-                )}
-              >
-                <Lightbulb size={14} />
-                Suggestions
-              </button>
-              <button
-                onClick={() => setActiveTab("assessment")}
-                className={cn(
-                  "flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-colors -mb-px",
-                  activeTab === "assessment"
-                    ? "border-primary text-primary"
-                    : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200",
-                )}
-              >
-                <ClipboardCheck size={14} />
-                Assessment
-              </button>
-            </div>
-
-            <div className="p-8 min-h-[300px] relative">
-              {aiLoading && (
-                <div className="absolute inset-0 bg-white/50 dark:bg-surface-card/50 backdrop-blur-sm z-10 flex flex-col items-center justify-center gap-3">
-                  <div className="relative">
-                    <Loader2 className="w-12 h-12 text-primary animate-spin" />
-                    <Sparkles className="w-6 h-6 text-primary absolute -top-2 -right-2 animate-bounce" />
-                  </div>
-                  <p className="text-xs font-black text-slate-500 uppercase tracking-widest">
-                    AI architect is thinking...
-                  </p>
-                </div>
-              )}
-
-              {aiError && (
-                <div className="bg-rose-500/10 border border-rose-500/20 p-4 rounded-2xl flex items-center gap-3 text-rose-600 mb-6">
-                  <AlertCircle className="w-5 h-5" />
-                  <p className="text-xs font-bold uppercase tracking-tight">
-                    {aiError}
-                  </p>
-                </div>
-              )}
-
-              {!insights && !aiLoading && (
-                <div className="flex flex-col items-center justify-center py-12 text-center space-y-4">
-                  <div className="w-20 h-20 bg-slate-100 dark:bg-sidebar-bg rounded-3xl flex items-center justify-center text-slate-300">
-                    <Sparkles className="w-10 h-10" />
-                  </div>
-                  <div className="max-w-xs">
-                    <h4 className="text-sm font-black text-slate-800 dark:text-white uppercase">
-                      No active analysis
-                    </h4>
-                    <p className="text-xs text-slate-500 mt-1 font-medium italic">
-                      Run AI Analysis to get deep narrative insights and
-                      stability recommendations.
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              <div className="prose prose-slate dark:prose-invert max-w-none">
-                {activeTab === "insights" && insights && (
-                  <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-                    <ReactMarkdown
-                      remarkPlugins={[remarkGfm]}
-                      components={{
-                        p: ({ node, ...props }) => (
-                          <p
-                            className="text-sm leading-relaxed font-medium text-slate-600 dark:text-slate-300 mb-4"
-                            {...props}
-                          />
-                        ),
-                      }}
-                    >
-                      {insights}
-                    </ReactMarkdown>
-                  </div>
-                )}
-                {activeTab === "suggestions" && suggestions && (
-                  <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-                    <ReactMarkdown
-                      remarkPlugins={[remarkGfm]}
-                      components={{
-                        p: ({ node, ...props }) => (
-                          <p
-                            className="text-sm leading-relaxed font-medium text-slate-600 dark:text-slate-300 mb-4"
-                            {...props}
-                          />
-                        ),
-                        li: ({ node, ...props }) => (
-                          <li
-                            className="text-sm font-medium text-slate-600 dark:text-slate-300 mb-2"
-                            {...props}
-                          />
-                        ),
-                      }}
-                    >
-                      {suggestions}
-                    </ReactMarkdown>
-                  </div>
-                )}
-                {activeTab === "assessment" && assessment && (
-                  <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-                    <ReactMarkdown
-                      remarkPlugins={[remarkGfm]}
-                      components={{
-                        h3: ({ node, ...props }) => (
-                          <div className="flex items-center gap-3 mb-6 p-4 bg-primary/5 rounded-2xl border border-primary/10">
-                            <Sparkles className="w-5 h-5 text-primary" />
-                            <h3
-                              className="text-lg font-bold text-primary m-0"
-                              {...props}
-                            />
-                          </div>
-                        ),
-                        table: ({ node, ...props }) => (
-                          <div className="overflow-hidden border border-slate-200 dark:border-border-brand rounded-xl">
-                            <table
-                              className="min-w-full divide-y divide-slate-200 dark:divide-border-brand m-0"
-                              {...props}
-                            />
-                          </div>
-                        ),
-                        thead: ({ node, ...props }) => (
-                          <thead
-                            className="bg-slate-50 dark:bg-surface-dark"
-                            {...props}
-                          />
-                        ),
-                        th: ({ node, ...props }) => (
-                          <th
-                            className="px-4 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-widest"
-                            {...props}
-                          />
-                        ),
-                        td: ({ node, ...props }) => (
-                          <td
-                            className="px-4 py-3 text-xs font-medium text-slate-600 dark:text-slate-300 border-t border-slate-100 dark:border-border-brand/50"
-                            {...props}
-                          />
-                        ),
-                      }}
-                    >
-                      {assessment}
-                    </ReactMarkdown>
-                  </div>
-                )}
               </div>
             </div>
           </div>

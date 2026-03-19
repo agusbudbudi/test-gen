@@ -7,6 +7,15 @@ export function metricsRouter(store) {
   router.get('/trend', async (req, res) => {
     try {
       const limit = Number(req.query.limit || 30);
+      
+      // Try cache first if limit is default
+      if (limit === 30) {
+        const cache = await store.getCache('dashboard_metrics');
+        if (cache && cache.data && cache.data.trend) {
+          return res.json({ trend: cache.data.trend, cached: true });
+        }
+      }
+
       const data = await store.getTrendData(limit);
       res.json({ trend: data });
     } catch (error) {
@@ -17,6 +26,15 @@ export function metricsRouter(store) {
   router.get('/suites', async (req, res) => {
     try {
       const limit = Number(req.query.limit || 10);
+
+      // Try cache first if limit is default
+      if (limit === 10) {
+        const cache = await store.getCache('dashboard_metrics');
+        if (cache && cache.data && cache.data.suites) {
+          return res.json({ suites: cache.data.suites, cached: true });
+        }
+      }
+
       const suites = await store.getSuiteBreakdown(limit);
       res.json({ suites });
     } catch (error) {
@@ -27,6 +45,15 @@ export function metricsRouter(store) {
   router.get('/status-buckets', async (req, res) => {
     try {
       const limit = Number(req.query.limit || 30);
+
+      // Try cache first if limit is default
+      if (limit === 30) {
+        const cache = await store.getCache('dashboard_metrics');
+        if (cache && cache.data && cache.data.buckets) {
+          return res.json({ buckets: cache.data.buckets, cached: true });
+        }
+      }
+
       const runs = await store.getTrendData(limit);
       const buckets = aggregateStatusBuckets(runs);
       res.json({ buckets });
@@ -38,6 +65,15 @@ export function metricsRouter(store) {
   router.get('/duration-trend', async (req, res) => {
     try {
       const limit = Number(req.query.limit || 10);
+
+      // Try cache first if limit is default
+      if (limit === 10) {
+        const cache = await store.getCache('dashboard_metrics');
+        if (cache && cache.data && cache.data.durations) {
+          return res.json({ durations: cache.data.durations, cached: true });
+        }
+      }
+
       const runs = await store.getTrendData(limit);
       const durations = runs.map((run) => ({
         runId: run.runId,
@@ -53,6 +89,15 @@ export function metricsRouter(store) {
   router.get('/categories-trend', async (req, res) => {
     try {
       const limit = Number(req.query.limit || 10);
+
+      // Try cache first if limit is default
+      if (limit === 10) {
+        const cache = await store.getCache('dashboard_metrics');
+        if (cache && cache.data && cache.data.categories) {
+          return res.json({ categories: cache.data.categories, cached: true });
+        }
+      }
+
       const runs = await store.getTrendData(limit);
       const categories = runs.map((run) => ({
         runId: run.runId,
