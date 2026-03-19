@@ -1,5 +1,9 @@
+import path from 'path';
 import { Run } from './models/Run.js';
 import connectDB from './db.js';
+import { uploadToBlob } from './blobService.js';
+
+const ALLURE_RESULTS_DIR = process.env.ALLURE_RESULTS_DIR || "/Users/agudbudiman/Documents/automation-diricare/healthapp-web-automation/allure-results";
 
 export class DataStore {
   constructor() {
@@ -97,9 +101,34 @@ export class DataStore {
     return Array.from(suiteMap.values());
   }
 
+  async _processAttachments(runData) {
+    if (!process.env.BLOB_READ_WRITE_TOKEN || !runData.tests) return;
+
+    console.log(`[Blob] Checking attachments for Run ${runData.runId}...`);
+        for (const test of runData.tests) {
+      if (test.attachments && test.attachments.length > 0) {
+        for (const att of test.attachments) {
+          // Only upload if it's a local filename AND it's an image
+          const isImage = att.type?.startsWith("image/");
+          if (att.source && !att.source.startsWith("http") && isImage) {
+            const localPath = path.join(ALLURE_RESULTS_DIR, att.source);
+            const blobUrl = await uploadToBlob(localPath, `allure-results/${att.source}`);
+            if (blobUrl) {
+              console.log(`[Blob] Updated attachment ${att.name} to ${blobUrl}`);
+              att.source = blobUrl;
+            }
+          }
+        }
+      }
+    }
+  }
+
   async save(runData) {
     await connectDB();
     try {
+      // Process attachments (Upload to Vercel Blob if available)
+      await this._processAttachments(runData);
+
       // Reconstruct suites if they are missing names or to ensure consistency
       const suites = this._reconstructSuites(runData);
       

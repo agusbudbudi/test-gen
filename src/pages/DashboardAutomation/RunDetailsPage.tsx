@@ -136,17 +136,15 @@ const RunDetailsPage = () => {
   }
 
   const formatDuration = (ms: number) => {
-    if (!ms) return "0ms";
+    if (!ms || ms === 0) return "0s";
     if (ms < 1000) return `${ms}ms`;
-    const totalS = Math.floor(ms / 1000);
-    const m = Math.floor(totalS / 60);
-    const s = totalS % 60;
-    const remainder = ms % 1000;
-
-    if (m > 0) {
-      return remainder > 0 ? `${m}m ${s}s ${remainder}ms` : `${m}m ${s}s`;
-    }
-    return remainder > 0 ? `${s}s ${remainder}ms` : `${s}s`;
+    const totalSeconds = Math.floor(ms / 1000);
+    const h = Math.floor(totalSeconds / 3600);
+    const m = Math.floor((totalSeconds % 3600) / 60);
+    const s = totalSeconds % 60;
+    if (h > 0) return `${h}h ${m}m`;
+    if (m > 0) return `${m}m ${s}s`;
+    return `${s}s`;
   };
 
   return (

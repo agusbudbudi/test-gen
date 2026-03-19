@@ -163,11 +163,15 @@ const AutomationInsightPage = () => {
   };
 
   const formatDuration = (ms: number) => {
-    if (!ms) return "0s";
-    const seconds = Math.floor(ms / 1000);
-    const minutes = Math.floor(seconds / 60);
-    if (minutes > 0) return `${minutes}m ${seconds % 60}s`;
-    return `${seconds}s`;
+    if (!ms || ms === 0) return "0s";
+    if (ms < 1000) return `${ms}ms`;
+    const totalSeconds = Math.floor(ms / 1000);
+    const h = Math.floor(totalSeconds / 3600);
+    const m = Math.floor((totalSeconds % 3600) / 60);
+    const s = totalSeconds % 60;
+    if (h > 0) return `${h}h ${m}m`;
+    if (m > 0) return `${m}m ${s}s`;
+    return `${s}s`;
   };
 
   if (loading) {

@@ -12,6 +12,18 @@ import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
 import { cn } from "@/lib/utils";
 
+const formatDuration = (ms: number) => {
+  if (!ms || ms === 0) return "0s";
+  if (ms < 1000) return `${ms}ms`;
+  const totalSeconds = Math.floor(ms / 1000);
+  const h = Math.floor(totalSeconds / 3600);
+  const m = Math.floor((totalSeconds % 3600) / 60);
+  const s = totalSeconds % 60;
+  if (h > 0) return `${h}h ${m}m`;
+  if (m > 0) return `${m}m ${s}s`;
+  return `${s}s`;
+};
+
 const AutomationRunsPage = () => {
   const { runs, loading, error, clearHistory } = useDashboardData();
   const navigate = useNavigate();
@@ -100,6 +112,9 @@ const AutomationRunsPage = () => {
                 <th className="px-6 py-4 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest text-center">
                   Failed
                 </th>
+                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest text-center">
+                  Duration
+                </th>
                 <th className="px-6 py-4 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest text-right">
                   Pass Rate
                 </th>
@@ -131,6 +146,9 @@ const AutomationRunsPage = () => {
                   </td>
                   <td className="px-6 py-4 text-xs font-bold text-rose-600 dark:text-rose-400 text-center">
                     {run.summary.failed}
+                  </td>
+                  <td className="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 text-center">
+                    {formatDuration(run.summary.duration)}
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div
