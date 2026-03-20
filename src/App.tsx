@@ -49,6 +49,10 @@ const DocumentationPage = lazy(
   () => import("@/pages/Documentation/DocumentationPage"),
 );
 
+const ImportantLinksPage = lazy(
+  () => import("@/pages/ImportantLinks/ImportantLinksPage"),
+);
+
 const App = () => {
   const {
     isPromptModalOpen,
@@ -118,6 +122,7 @@ const App = () => {
                 path="/documentation/:docId"
                 element={<DocumentationPage />}
               />
+              <Route path="/important-links" element={<ImportantLinksPage />} />
               <Route path="*" element={<Navigate to="/generate" replace />} />
             </Route>
           </Routes>

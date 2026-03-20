@@ -19,6 +19,7 @@ import {
   LayoutDashboard,
   BarChart3,
   Activity,
+  Bookmark,
 } from "lucide-react";
 import { useUIStore } from "@/stores/uiStore";
 import { useThemeStore } from "@/stores/themeStore";
@@ -72,6 +73,7 @@ const Sidebar = () => {
       group: "System",
       items: [
         { to: "/settings", icon: Settings, label: "Settings" },
+        { to: "/important-links", icon: Bookmark, label: "Important Links" },
         { to: "/documentation", icon: Lightbulb, label: "Documentation" },
       ],
     },
@@ -138,11 +140,11 @@ const Sidebar = () => {
             <div
               key={section.group}
               className={cn(
-                idx !== 0 && (sidebarCollapsed ? "mt-1.5" : "mt-5"),
+                idx !== 0 && (sidebarCollapsed ? "mt-1" : "mt-3"),
               )}
             >
               {!sidebarCollapsed || isMobileMenuOpen ? (
-                <h3 className="px-3 mb-1.5 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.1em] animate-in fade-in duration-500">
+                <h3 className="px-3 mb-1 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.1em] animate-in fade-in duration-500">
                   {section.group}
                 </h3>
               ) : (
@@ -159,8 +161,8 @@ const Sidebar = () => {
                     onClick={closeMobileMenu}
                     className={({ isActive }) =>
                       cn(
-                        "flex items-center gap-3 px-3 rounded-lg transition-all group relative duration-200 overflow-hidden",
-                        sidebarCollapsed ? "py-2.5" : "py-2",
+                        "flex items-center gap-2.5 px-3 rounded-lg transition-all group relative duration-200 overflow-hidden",
+                        sidebarCollapsed ? "py-2" : "py-1.5",
                         isActive
                           ? "bg-primary/10 text-primary dark:text-primary-foreground dark:bg-primary/20"
                           : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-primary/5 hover:text-slate-900 dark:hover:text-slate-200",
@@ -173,7 +175,7 @@ const Sidebar = () => {
                           <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-primary rounded-r-full shadow-[0_0_8px_rgba(var(--primary),0.4)]" />
                         )}
                         <item.icon
-                          size={18}
+                          size={16}
                           className={cn(
                             "flex-shrink-0 transition-all duration-300",
                             isActive
@@ -182,7 +184,7 @@ const Sidebar = () => {
                           )}
                         />
                         {(!sidebarCollapsed || isMobileMenuOpen) && (
-                          <span className="font-medium text-sm whitespace-nowrap animate-in fade-in slide-in-from-left-1 duration-300">
+                          <span className="font-medium text-[13px] whitespace-nowrap animate-in fade-in slide-in-from-left-1 duration-300">
                             {item.label}
                           </span>
                         )}
@@ -199,12 +201,12 @@ const Sidebar = () => {
         <div className="p-2.5 space-y-0.5 border-t border-slate-100 dark:border-border-brand">
           <button
             onClick={toggleTheme}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-700 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-primary/10 hover:text-slate-900 dark:hover:text-slate-200 transition-all group"
+            className="w-full flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-slate-700 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-primary/10 hover:text-slate-900 dark:hover:text-slate-200 transition-all group"
             title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
           >
-            {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
+            {isDarkMode ? <Sun size={16} /> : <Moon size={16} />}
             {(!sidebarCollapsed || isMobileMenuOpen) && (
-              <span className="font-medium text-sm whitespace-nowrap">
+              <span className="font-medium text-[13px] whitespace-nowrap">
                 {isDarkMode ? "Light Mode" : "Dark Mode"}
               </span>
             )}
