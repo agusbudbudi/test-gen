@@ -19,6 +19,9 @@ import {
   Settings,
   Key,
   Layers,
+  LayoutDashboard,
+  PlayCircle,
+  PieChart,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 // import docsIndex from "@/assets/docs/index.json";
@@ -43,6 +46,9 @@ const iconMap: Record<string, any> = {
   "settings": Settings,
   "atlassian-token": Key,
   "flaky-tests": Beaker,
+  "automation-overview": LayoutDashboard,
+  "automation-runs": PlayCircle,
+  "automation-insights": PieChart,
 };
 
 const DocumentationPage = () => {

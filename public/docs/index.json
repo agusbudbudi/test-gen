@@ -75,5 +75,26 @@
     "description": "Strategies to identify, isolate, and fix flaky tests and environmental issues in automation.",
     "category": "Execution & Insight",
     "file": "flaky-tests.md"
+  },
+  {
+    "id": "automation-overview",
+    "title": "Automation Overview",
+    "description": "View high-level metrics and trends of your automated test runs.",
+    "category": "Execution & Insight",
+    "file": "automation-overview.md"
+  },
+  {
+    "id": "automation-runs",
+    "title": "Automation Runs",
+    "description": "Detailed history of all test executions, statuses, and performance over time.",
+    "category": "Execution & Insight",
+    "file": "automation-runs.md"
+  },
+  {
+    "id": "automation-insights",
+    "title": "Automation Insights",
+    "description": "Deep dive into test stability, flaky tests, and infrastructure issues.",
+    "category": "Execution & Insight",
+    "file": "automation-insights.md"
   }
 ]

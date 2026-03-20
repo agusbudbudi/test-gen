@@ -7,6 +7,7 @@ import { DataStore } from './dashboard/dataStore.js';
 import { runsRouter } from './dashboard/routes/runs.js';
 import { metricsRouter } from './dashboard/routes/metrics.js';
 import { runDetailsRouter } from './dashboard/routes/runDetails.js';
+import { linksRouter } from './links/routes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -403,6 +404,7 @@ app.post("/api/confluence/page", async (req, res) => {
 app.use('/api/dashboard/runs', runsRouter(dashboardStore));
 app.use('/api/dashboard/metrics', metricsRouter(dashboardStore));
 app.use('/api/dashboard/run-details', runDetailsRouter(dashboardStore));
+app.use('/api/links', linksRouter);
 
 // Webhook for Cypress results
 app.post("/api/dashboard/webhook", async (req, res) => {
