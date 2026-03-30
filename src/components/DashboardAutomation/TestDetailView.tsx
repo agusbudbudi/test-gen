@@ -10,9 +10,11 @@ import {
   Info,
   FolderOpen,
   Zap,
+  Copy,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import dayjs from "dayjs";
+import { useToastStore } from "@/stores/toastStore";
 
 interface TestDetailViewProps {
   test: any;
@@ -252,6 +254,14 @@ const ExecutionStepsSection = ({
 };
 
 export const TestDetailView = ({ test }: TestDetailViewProps) => {
+  const addToast = useToastStore((state) => state.addToast);
+
+  const handleCopy = (text: string, label: string) => {
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+    addToast(`${label} copied to clipboard`, "success");
+  };
+
   if (!test) {
     return (
       <div className="h-full flex flex-col items-center justify-center text-center p-8 space-y-4">
@@ -374,20 +384,46 @@ export const TestDetailView = ({ test }: TestDetailViewProps) => {
                 <AlertTriangle className="w-3 h-3" />
                 Failure Details
               </h3>
-              <div className="bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/50 rounded-xl p-4 overflow-hidden">
-                <p className="text-xs font-mono font-medium text-rose-600 dark:text-rose-400 whitespace-pre-wrap break-all leading-relaxed">
-                  {test.statusDetails.message || "No error message provided."}
-                </p>
+              <div className="bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/50 rounded-xl p-4 overflow-hidden relative group/failure">
+                <div className="flex justify-between items-start gap-4">
+                  <p className="text-xs font-mono font-medium text-rose-600 dark:text-rose-400 whitespace-pre-wrap break-all leading-relaxed flex-1">
+                    {test.statusDetails.message || "No error message provided."}
+                  </p>
+                  {test.statusDetails.message && (
+                    <button
+                      onClick={() => handleCopy(test.statusDetails.message, "Error message")}
+                      className="p-1.5 rounded-lg hover:bg-rose-100 dark:hover:bg-rose-900/50 text-rose-400 hover:text-rose-600 transition-colors shrink-0"
+                      title="Copy error message"
+                    >
+                      <Copy size={13} />
+                    </button>
+                  )}
+                </div>
                 {test.statusDetails.trace && (
-                  <details className="mt-4 group">
-                    <summary className="text-[9px] font-black text-rose-400 dark:text-rose-600 cursor-pointer list-none flex items-center gap-1 hover:text-rose-500">
-                      <ChevronRight className="w-3 h-3 group-open:rotate-90 transition-transform" />
-                      VIEW STACK TRACE
-                    </summary>
-                    <pre className="mt-3 p-3 bg-white dark:bg-sidebar-bg/50 rounded-lg text-[10px] font-mono text-slate-500 dark:text-slate-400 overflow-x-auto border border-rose-100/50 dark:border-border-brand/20">
-                      {test.statusDetails.trace}
-                    </pre>
-                  </details>
+                  <div className="mt-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-[9px] font-black text-rose-400 dark:text-rose-600 uppercase tracking-widest flex items-center gap-1">
+                        Stack Trace
+                      </h4>
+                      <button
+                        onClick={() => handleCopy(test.statusDetails.trace!, "Stack trace")}
+                        className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-rose-100/50 dark:bg-rose-900/30 hover:bg-rose-200 dark:hover:bg-rose-900/50 text-rose-600 dark:text-rose-400 transition-all text-[9px] font-black uppercase"
+                        title="Copy stack trace"
+                      >
+                        <span>Copy Trace</span>
+                        <Copy size={11} />
+                      </button>
+                    </div>
+                    <details className="group/trace" open>
+                      <summary className="text-[9px] font-black text-rose-400 dark:text-rose-600 cursor-pointer list-none flex items-center gap-1 hover:text-rose-500 mb-2">
+                        <ChevronRight className="w-3 h-3 group-open/trace:rotate-90 transition-transform" />
+                        TEST EXECUTION LOGS / TRACE
+                      </summary>
+                      <pre className="p-3 bg-white dark:bg-sidebar-bg/50 rounded-lg text-[10px] font-mono text-slate-500 dark:text-slate-400 overflow-x-auto border border-rose-100/50 dark:border-border-brand/20 whitespace-pre">
+                        {test.statusDetails.trace}
+                      </pre>
+                    </details>
+                  </div>
                 )}
               </div>
             </div>
@@ -440,20 +476,22 @@ export const TestDetailView = ({ test }: TestDetailViewProps) => {
           )}
 
         {/* Attachments */}
-        {test.attachments && test.attachments.length > 0 && (
-          <div className="space-y-3">
-            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-              <Paperclip className="w-3 h-3" />
-              Attachments ({test.attachments.length})
-            </h3>
-            <div className="grid grid-cols-1 gap-3">
-              {test.attachments.map((att: any, idx: number) => {
-                const src = att.source?.startsWith("http")
-                  ? att.source
-                  : `/api/allure-results/${att.source}`;
-                const isImage = att.type?.startsWith("image/");
-
-                if (isImage) {
+        {(() => {
+          const imageAttachments = test.attachments?.filter((att: any) => att.type?.startsWith("image/")) || [];
+          if (imageAttachments.length === 0) return null;
+          
+          return (
+            <div className="space-y-3">
+              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                <Paperclip className="w-3 h-3" />
+                Attachments ({imageAttachments.length})
+              </h3>
+              <div className="grid grid-cols-1 gap-3">
+                {imageAttachments.map((att: any, idx: number) => {
+                  const src = att.source?.startsWith("http")
+                    ? att.source
+                    : `/api/allure-results/${att.source}`;
+                  
                   return (
                     <a
                       key={idx}
@@ -478,33 +516,11 @@ export const TestDetailView = ({ test }: TestDetailViewProps) => {
                       </div>
                     </a>
                   );
-                }
-
-                return (
-                  <a
-                    key={idx}
-                    href={src}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-surface-dark border border-slate-100 dark:border-border-brand rounded-xl hover:border-primary/50 group transition-all"
-                  >
-                    <div className="w-8 h-8 bg-white dark:bg-sidebar-bg rounded-lg flex items-center justify-center text-slate-400 group-hover:text-primary border border-slate-100 dark:border-border-brand transition-colors">
-                      <Paperclip className="w-4 h-4" />
-                    </div>
-                    <div className="flex flex-col min-w-0">
-                      <span className="text-xs font-bold text-slate-700 dark:text-slate-200 truncate">
-                        {att.name || "Unnamed Attachment"}
-                      </span>
-                      <span className="text-[10px] text-slate-400 font-medium uppercase tracking-tight">
-                        {att.type}
-                      </span>
-                    </div>
-                  </a>
-                );
-              })}
+                })}
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
       </div>
     </div>
   );

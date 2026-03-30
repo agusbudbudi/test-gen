@@ -35,3 +35,30 @@ export async function uploadToBlob(localFilePath, blobPath) {
     return null;
   }
 }
+
+/**
+ * Uploads a buffer to Vercel Blob.
+ * 
+ * @param {Buffer} buffer - The file content as a Buffer.
+ * @param {string} blobPath - Desired path in Vercel Blob.
+ * @returns {Promise<string|null>} - The URL of the uploaded blob, or null if failed.
+ */
+export async function uploadFromBuffer(buffer, blobPath) {
+  try {
+    if (!process.env.BLOB_READ_WRITE_TOKEN) {
+      console.warn('BLOB_READ_WRITE_TOKEN is not set. Skipping blob upload.');
+      return null;
+    }
+
+    const { url } = await put(blobPath, buffer, {
+      access: 'public',
+      token: process.env.BLOB_READ_WRITE_TOKEN
+    });
+
+    console.log(`Successfully uploaded buffer to Vercel Blob: ${url}`);
+    return url;
+  } catch (error) {
+    console.error(`Failed to upload buffer to Vercel Blob:`, error);
+    return null;
+  }
+}

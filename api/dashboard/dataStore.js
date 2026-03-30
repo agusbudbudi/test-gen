@@ -2,7 +2,7 @@ import path from 'path';
 import { Run } from './models/Run.js';
 import { Cache } from './models/Cache.js';
 import connectDB from './db.js';
-import { uploadToBlob } from './blobService.js';
+import { uploadToBlob, uploadFromBuffer } from './blobService.js';
 
 const ALLURE_RESULTS_DIR = process.env.ALLURE_RESULTS_DIR || "/Users/agudbudiman/Documents/automation-diricare/healthapp-web-automation/allure-results";
 
@@ -174,17 +174,42 @@ export class DataStore {
     if (!process.env.BLOB_READ_WRITE_TOKEN || !runData.tests) return;
 
     console.log(`[Blob] Checking attachments for Run ${runData.runId}...`);
-        for (const test of runData.tests) {
+    for (const test of runData.tests) {
       if (test.attachments && test.attachments.length > 0) {
         for (const att of test.attachments) {
-          // Only upload if it's a local filename AND it's an image
+          // Only upload if it's a local filename OR content AND it's an image
           const isImage = att.type?.startsWith("image/");
-          if (att.source && !att.source.startsWith("http") && isImage) {
-            const localPath = path.join(ALLURE_RESULTS_DIR, att.source);
-            const blobUrl = await uploadToBlob(localPath, `allure-results/${att.source}`);
+          if (!isImage) continue;
+          
+          if (att.source && !att.source.startsWith("http")) {
+            let blobUrl = null;
+
+            // 1. If content is provided directly (base64), prioritize that
+            if (att.content) {
+              try {
+                console.log(`[Blob] Uploading attachment ${att.name} from content...`);
+                // Check if content is base64
+                const isBase64 = att.content.includes(",") ? att.content.split(",")[1] : att.content;
+                const buffer = Buffer.from(isBase64, 'base64');
+                blobUrl = await uploadFromBuffer(buffer, `allure-results/${runData.runId}/${att.source}`);
+              } catch (e) {
+                console.error(`[Blob] Failed to upload from content:`, e.message);
+              }
+            }
+
+            // 2. Otherwise try local file if exists
+            if (!blobUrl) {
+              const localPath = path.join(ALLURE_RESULTS_DIR, att.source);
+              if (fs.existsSync(localPath)) {
+                blobUrl = await uploadToBlob(localPath, `allure-results/${runData.runId}/${att.source}`);
+              }
+            }
+
             if (blobUrl) {
               console.log(`[Blob] Updated attachment ${att.name} to ${blobUrl}`);
               att.source = blobUrl;
+              // Clear content once uploaded to save DB space
+              delete att.content;
             }
           }
         }

@@ -6,6 +6,7 @@ export interface Link {
   title: string;
   description: string;
   imageUrl: string;
+  tags?: string[];
   createdAt: string;
 }
 
