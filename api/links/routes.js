@@ -84,6 +84,14 @@ linksRouter.post('/parse', async (req, res) => {
                          html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:image["']/i);
     if (ogImageMatch) imageUrl = ogImageMatch[1];
 
+    // Fallback to high-res Google Favicon if no open graph image exists
+    if (!imageUrl) {
+      try {
+        const u = new URL(url);
+        imageUrl = `https://www.google.com/s2/favicons?domain=${u.hostname}&sz=128`;
+      } catch (e) {}
+    }
+
     // Clean up entities simply
     const decodeEntities = (str) => {
       if (!str) return str;

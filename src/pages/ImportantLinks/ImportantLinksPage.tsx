@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Bookmark, Plus, Loader2, Search, X } from "lucide-react";
 import { useLinkStore, Link as LinkType } from "@/stores/linkStore";
+import { useToastStore } from "@/stores/toastStore";
 import LinkCard from "@/components/ImportantLinks/LinkCard";
 import LinkModal from "@/components/ImportantLinks/LinkModal";
 
@@ -9,17 +10,25 @@ export default function ImportantLinksPage() {
   const [isModalOpen, setModalOpen] = useState(false);
   const [linkToEdit, setLinkToEdit] = useState<LinkType | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const addToast = useToastStore((state) => state.addToast);
 
   useEffect(() => {
     fetchLinks();
   }, [fetchLinks]);
 
-  const filteredLinks = links.filter(
-    (link) =>
+  const allTags = Array.from(new Set(links.flatMap((link) => link.tags || []))).sort();
+
+  const filteredLinks = links.filter((link) => {
+    const matchesSearch =
       link.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       link.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      link.url.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+      link.url.toLowerCase().includes(searchQuery.toLowerCase());
+      
+    const matchesTag = selectedTag ? link.tags?.includes(selectedTag) : true;
+
+    return matchesSearch && matchesTag;
+  });
 
   const handleAdd = () => {
     setLinkToEdit(null);
@@ -33,7 +42,12 @@ export default function ImportantLinksPage() {
 
   const handleDelete = async (id: string) => {
     if (confirm("Are you sure you want to delete this link?")) {
-      await deleteLink(id);
+      try {
+        await deleteLink(id);
+        addToast("Link has been removed.", "success");
+      } catch (error) {
+        addToast("Failed to delete link.", "error");
+      }
     }
   };
 
@@ -91,7 +105,7 @@ export default function ImportantLinksPage() {
     }
 
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-6">
         {filteredLinks.map((link) => (
           <LinkCard 
             key={link._id} 
@@ -158,6 +172,35 @@ export default function ImportantLinksPage() {
               <span className="whitespace-nowrap">Add Link</span>
             </button>
           </div>
+
+          {/* Tags Filter */}
+          {allTags.length > 0 && (
+            <div className="w-full max-w-7xl mx-auto mb-6 flex flex-wrap gap-2 animate-in fade-in slide-in-from-top-4 duration-500">
+               <button
+                 onClick={() => setSelectedTag(null)}
+                 className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-all ${
+                   selectedTag === null 
+                     ? "bg-primary text-white shadow-sm shadow-primary/20" 
+                     : "bg-slate-100 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+                 }`}
+               >
+                 All
+               </button>
+               {allTags.map(tag => (
+                 <button
+                   key={tag}
+                   onClick={() => setSelectedTag(tag === selectedTag ? null : tag)}
+                   className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-all ${
+                     selectedTag === tag 
+                       ? "bg-primary text-white shadow-sm shadow-primary/20" 
+                       : "bg-slate-100 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+                   }`}
+                 >
+                   {tag}
+                 </button>
+               ))}
+            </div>
+          )}
 
           <div className="flex-1">
             {renderContent()}
