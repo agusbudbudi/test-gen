@@ -4,6 +4,7 @@ export interface ChatPayload {
   temperature?: number
   response_format?: { type: 'json_object' | 'text' }
   stream?: boolean
+  provider?: string
 }
 
 export async function fetchChat(payload: ChatPayload, apiKey?: string) {

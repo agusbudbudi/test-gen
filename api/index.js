@@ -48,12 +48,125 @@ app.post("/api/chat", async (req, res) => {
         .json({ error: "Invalid payload: expected { model, messages, ... }" });
     }
 
+    // Initialize Provider setup
+    const isAnthropic = payload.provider === 'anthropic';
+    const cleanPayload = { ...payload };
+    delete cleanPayload.provider;
+
+    if (isAnthropic) {
+      const anthropicMessages = [];
+      let systemPrompt = "";
+      for (const m of cleanPayload.messages) {
+        if (m.role === 'system') {
+          systemPrompt += m.content + "\n";
+        } else {
+          anthropicMessages.push(m);
+        }
+      }
+
+      const anthropicPayload = {
+        model: cleanPayload.model,
+        max_tokens: 8192,
+        messages: anthropicMessages,
+        ...(systemPrompt ? { system: systemPrompt.trim() } : {}),
+        stream: cleanPayload.stream,
+        ...(cleanPayload.temperature !== undefined ? { temperature: cleanPayload.temperature } : {})
+      };
+
+      if (cleanPayload.stream) {
+        console.log('Starting Anthropic stream for model:', cleanPayload.model);
+        const r = await axios.post(
+          "https://api.anthropic.com/v1/messages",
+          anthropicPayload,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              "x-api-key": apiKey,
+              "anthropic-version": "2023-06-01"
+            },
+            responseType: 'stream',
+            timeout: 60000,
+          }
+        );
+
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Connection', 'keep-alive');
+        res.setHeader('X-Accel-Buffering', 'no');
+
+        let buffer = '';
+        r.data.on('data', (chunk) => {
+          buffer += chunk.toString();
+          let parts = buffer.split('\n\n');
+          buffer = parts.pop() || '';
+          
+          for (const part of parts) {
+            if (part.includes('event: content_block_delta') || part.includes('event: content_block_start')) {
+              const dataLine = part.split('\n').find(l => l.startsWith('data: '));
+              if (dataLine) {
+                try {
+                  const dataObj = JSON.parse(dataLine.substring(6));
+                  // Extract text from text_delta or message_start content block empty string
+                  const text = dataObj.delta?.text || dataObj.content_block?.text || '';
+                  if (text) {
+                    res.write(`data: ${JSON.stringify({choices:[{delta:{content: text}}]})}\n\n`);
+                  }
+                } catch(e) {}
+              }
+            } else if (part.includes('event: message_stop')) {
+              res.write(`data: [DONE]\n\n`);
+            }
+          }
+        });
+
+        r.data.on('end', () => {
+          res.write(`data: [DONE]\n\n`);
+          res.end();
+        });
+
+        r.data.on('error', (err) => {
+          console.error('Anthropic stream error:', err);
+          if (!res.headersSent) {
+            res.status(500).end();
+          } else {
+            res.end();
+          }
+        });
+        return;
+      }
+
+      // Non-streaming Anthropic
+      const r = await axios.post(
+        "https://api.anthropic.com/v1/messages",
+        anthropicPayload,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            "x-api-key": apiKey,
+            "anthropic-version": "2023-06-01"
+          },
+          timeout: 60000,
+        }
+      );
+
+      return res.status(200).json({
+        choices: [
+          {
+            message: {
+              content: r.data.content?.[0]?.text || ''
+            }
+          }
+        ]
+      });
+    }
+
+    // Handle OpenAI
     // Handle streaming
-    if (payload.stream) {
-      console.log('Starting AI stream for model:', payload.model);
+    if (cleanPayload.stream) {
+      console.log('Starting AI stream for model:', cleanPayload.model);
       const r = await axios.post(
         "https://api.openai.com/v1/chat/completions",
-        payload,
+        cleanPayload,
         {
           headers: {
             "Content-Type": "application/json",
@@ -91,7 +204,7 @@ app.post("/api/chat", async (req, res) => {
 
     const r = await axios.post(
       "https://api.openai.com/v1/chat/completions",
-      payload,
+      cleanPayload,
       {
         headers: {
           "Content-Type": "application/json",

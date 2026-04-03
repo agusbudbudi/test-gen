@@ -13,7 +13,7 @@ export interface JiraTicketData {
 export function useACAnalyzer() {
   const [generating, setGenerating] = useState(false);
 
-  const { jiraUrl, jiraEmail, jiraToken, apiKey, selectedModel } = useUIStore();
+  const { jiraUrl, jiraEmail, jiraToken, apiKey, anthropicApiKey, aiProvider, selectedModel } = useUIStore();
   const addToast = useToastStore((state) => state.addToast);
 
   const {
@@ -101,7 +101,8 @@ export function useACAnalyzer() {
         return;
       }
 
-      if (!apiKey) {
+      const activeApiKey = aiProvider === 'anthropic' ? anthropicApiKey : apiKey;
+      if (!activeApiKey) {
         addToast(
           "API Key is missing! Please set it in the sidebar.",
           "warning",
@@ -196,8 +197,9 @@ Use the following format for estimations:
             messages: [{ role: "user", content: systemPrompt }],
             ...(selectedModel.startsWith("o") ? {} : { temperature: 0.2 }),
             stream: true,
+            provider: aiProvider,
           },
-          apiKey,
+          activeApiKey,
           (chunk) => {
             fullResult += chunk;
 
@@ -226,7 +228,7 @@ Use the following format for estimations:
         setGenerating(false);
       }
     },
-    [apiKey, jiraUrl, jiraEmail, jiraToken, selectedModel, addToast, setResult],
+    [apiKey, anthropicApiKey, aiProvider, jiraUrl, jiraEmail, jiraToken, selectedModel, addToast, setResult],
   );
 
   return {

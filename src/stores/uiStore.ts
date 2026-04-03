@@ -11,6 +11,11 @@ interface UIState {
   apiKey: string
   setApiKey: (key: string) => void
   clearApiKey: () => void
+  aiProvider: string
+  setAiProvider: (provider: string) => void
+  anthropicApiKey: string
+  setAnthropicApiKey: (key: string) => void
+  clearAnthropicApiKey: () => void
   selectedModel: string
   setSelectedModel: (model: string) => void
   defaultTestCaseCount: number
@@ -63,6 +68,11 @@ export const useUIStore = create<UIState>()(
       apiKey: '',
       setApiKey: (key) => set({ apiKey: key }),
       clearApiKey: () => set({ apiKey: '' }),
+      aiProvider: 'openai',
+      setAiProvider: (provider) => set({ aiProvider: provider }),
+      anthropicApiKey: '',
+      setAnthropicApiKey: (key) => set({ anthropicApiKey: key }),
+      clearAnthropicApiKey: () => set({ anthropicApiKey: '' }),
       selectedModel: 'gpt-4o-mini',
       setSelectedModel: (model) => set({ selectedModel: model }),
       defaultTestCaseCount: 5,
@@ -115,6 +125,8 @@ export const useUIStore = create<UIState>()(
         sidebarCollapsed: state.sidebarCollapsed,
         promptInstructions: state.promptInstructions,
         apiKey: state.apiKey,
+        aiProvider: state.aiProvider,
+        anthropicApiKey: state.anthropicApiKey,
         selectedModel: state.selectedModel,
         defaultTestCaseCount: state.defaultTestCaseCount,
         testCaseTemplates: state.testCaseTemplates,

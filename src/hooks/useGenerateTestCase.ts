@@ -10,7 +10,7 @@ export function useGenerateTestCase() {
   const resultData = useResultStore((state) => state.generateResult)
   const setResultData = useResultStore((state) => state.setGenerateResult)
   
-  const { apiKey, promptInstructions, selectedModel, defaultTestCaseCount } = useUIStore()
+  const { apiKey, anthropicApiKey, aiProvider, promptInstructions, selectedModel, defaultTestCaseCount } = useUIStore()
   const addHistory = useHistoryStore((state) => state.addEntry)
   const addToast = useToastStore((state) => state.addToast)
 
@@ -28,7 +28,8 @@ export function useGenerateTestCase() {
     const count = options?.count ?? defaultTestCaseCount
     const model = options?.model ?? selectedModel
 
-    if (!apiKey) {
+    const activeApiKey = aiProvider === 'anthropic' ? anthropicApiKey : apiKey
+    if (!activeApiKey) {
       addToast('API Key is missing! Please set it in the sidebar.', 'warning')
       return
     }
@@ -58,9 +59,10 @@ ${promptInstructions}
     try {
       const data = await fetchChat({
         model: model,
+        provider: aiProvider,
         messages: [{ role: 'user', content: combinedPrompt }],
         ...(model.startsWith('o') ? {} : { temperature: 0.1 }),
-      }, apiKey)
+      }, activeApiKey)
 
       const resultText = data.choices?.[0]?.message?.content || ''
       const jsonString = resultText.replace(/```json\n?|```/g, '').trim()
@@ -94,7 +96,7 @@ ${promptInstructions}
     } finally {
       setLoading(false)
     }
-  }, [apiKey, promptInstructions, selectedModel, defaultTestCaseCount, addHistory, addToast, setResultData])
+  }, [apiKey, anthropicApiKey, aiProvider, promptInstructions, selectedModel, defaultTestCaseCount, addHistory, addToast, setResultData])
 
   return { generate, loading, resultData, setResultData }
 }

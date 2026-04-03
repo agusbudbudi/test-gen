@@ -14,7 +14,7 @@ export function useProductKnowledge() {
   const [generating, setGenerating] = useState(false)
   const [importingUrls, setImportingUrls] = useState<Record<string, boolean>>({}) // Track importing state by URL
   
-  const { jiraUrl, jiraEmail, jiraToken, apiKey, selectedModel } = useUIStore()
+  const { jiraUrl, jiraEmail, jiraToken, apiKey, anthropicApiKey, aiProvider, selectedModel } = useUIStore()
   const addToast = useToastStore((state) => state.addToast)
   
   const { 
@@ -88,7 +88,8 @@ export function useProductKnowledge() {
       return
     }
 
-    if (!apiKey) {
+    const activeApiKey = aiProvider === 'anthropic' ? anthropicApiKey : apiKey
+    if (!activeApiKey) {
       addToast('API Key is missing! Please set it in the sidebar.', 'warning')
       return
     }
@@ -192,8 +193,9 @@ ${contextBuilder}
         model: selectedModel,
         messages: [{ role: 'user', content: systemPrompt }],
         ...(selectedModel.startsWith('o') ? {} : { temperature: 0.2 }),
-        stream: true
-      }, apiKey, (chunk) => {
+        stream: true,
+        provider: aiProvider
+      }, activeApiKey, (chunk) => {
         fullResult += chunk
         
         let displayResult = fullResult
@@ -222,7 +224,7 @@ ${contextBuilder}
       setGenerating(false)
       setImportingUrls({})
     }
-  }, [apiKey, jiraUrl, jiraEmail, jiraToken, selectedModel, addToast, setResult])
+  }, [apiKey, anthropicApiKey, aiProvider, jiraUrl, jiraEmail, jiraToken, selectedModel, addToast, setResult])
 
   return { 
     generateProductKnowledge, 

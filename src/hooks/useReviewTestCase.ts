@@ -29,7 +29,7 @@ export function useReviewTestCase() {
   const reviewResult = useResultStore((state) => state.reviewResult)
   const setReviewResult = useResultStore((state) => state.setReviewResult)
   
-  const { apiKey, selectedModel } = useUIStore()
+  const { apiKey, anthropicApiKey, aiProvider, selectedModel } = useUIStore()
   const addHistory = useHistoryStore((state) => state.addEntry)
   const addToast = useToastStore((state) => state.addToast)
 
@@ -39,7 +39,8 @@ export function useReviewTestCase() {
       return
     }
 
-    if (!apiKey) {
+    const activeApiKey = aiProvider === 'anthropic' ? anthropicApiKey : apiKey
+    if (!activeApiKey) {
       addToast('API Key is missing!', 'warning')
       return
     }
@@ -69,8 +70,9 @@ Respond ONLY with the JSON object.`
           }
         ],
         ...(selectedModel.startsWith('o') ? {} : { temperature: 0.7 }),
-        response_format: { type: "json_object" }
-      }, apiKey)
+        response_format: { type: "json_object" },
+        provider: aiProvider
+      }, activeApiKey)
 
       const reply = data.choices?.[0]?.message?.content || '{}'
       try {
@@ -95,7 +97,7 @@ Respond ONLY with the JSON object.`
     } finally {
       setLoading(false)
     }
-  }, [apiKey, selectedModel, addToast, addHistory, setReviewResult])
+  }, [apiKey, anthropicApiKey, aiProvider, selectedModel, addToast, addHistory, setReviewResult])
 
   return { review, loading, reviewResult }
 }

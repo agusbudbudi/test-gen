@@ -27,6 +27,11 @@ const SettingsPage = () => {
     apiKey,
     setApiKey,
     clearApiKey,
+    aiProvider,
+    setAiProvider,
+    anthropicApiKey,
+    setAnthropicApiKey,
+    clearAnthropicApiKey,
     selectedModel,
     setSelectedModel,
     defaultTestCaseCount,
@@ -54,17 +59,27 @@ const SettingsPage = () => {
   // ─── General handlers ───────────────────────────────────────────
   const handleSaveGeneral = () => {
     if (apiKeyInput.trim()) {
-      setApiKey(apiKeyInput.trim());
+      if (aiProvider === "anthropic") {
+        setAnthropicApiKey(apiKeyInput.trim());
+      } else {
+        setApiKey(apiKeyInput.trim());
+      }
       setApiKeyInput("");
     }
     toast.success("General settings saved!");
   };
 
   const handleClearApiKey = () => {
-    clearApiKey();
+    if (aiProvider === "anthropic") {
+      clearAnthropicApiKey();
+    } else {
+      clearApiKey();
+    }
     setApiKeyInput("");
     toast.info("API Key cleared.");
   };
+
+  const activeApiKey = aiProvider === "anthropic" ? anthropicApiKey : apiKey;
 
   // ─── Jira handlers ─────────────────────────────────────────────
   const handleSaveJira = () => {
@@ -181,14 +196,76 @@ const SettingsPage = () => {
                   General
                 </h2>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  OpenAI configuration for AI-powered features.
+                  AI configuration for generating tests and analyzing code.
                 </p>
+              </div>
+
+              {/* Provider Selection */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                  AI Provider
+                </label>
+                <div className="flex gap-1 border-b border-slate-200 dark:border-slate-800">
+                  <button
+                    onClick={() => {
+                      setAiProvider("openai");
+                      setApiKeyInput("");
+                      if (selectedModel.startsWith("claude")) {
+                        setSelectedModel("gpt-4o-mini");
+                      }
+                    }}
+                    className={`flex items-center gap-2 px-5 py-2.5 text-sm font-semibold border-b-2 transition-colors -mb-px ${
+                      aiProvider === "openai"
+                        ? "border-primary text-primary"
+                        : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                    }`}
+                  >
+                    <img
+                      src="/assets/icons/open-ai-logo.webp"
+                      className="w-4 h-4 object-contain"
+                      alt="OpenAI"
+                    />
+                    OpenAI
+                    {aiProvider === "openai" && (
+                      <CheckCircle2 size={13} className="ml-1 text-primary" />
+                    )}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setAiProvider("anthropic");
+                      setApiKeyInput("");
+                      if (!selectedModel.startsWith("claude")) {
+                        setSelectedModel("claude-sonnet-4-6");
+                      }
+                    }}
+                    className={`flex items-center gap-2 px-5 py-2.5 text-sm font-semibold border-b-2 transition-colors -mb-px ${
+                      aiProvider === "anthropic"
+                        ? "border-orange-500 text-orange-600 dark:text-orange-400"
+                        : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                    }`}
+                  >
+                    <img
+                      src="/assets/icons/claude-logo.png"
+                      className="w-4 h-4 object-contain"
+                      alt="Anthropic"
+                    />
+                    Anthropic
+                    {aiProvider === "anthropic" && (
+                      <CheckCircle2
+                        size={13}
+                        className="ml-1 text-orange-500"
+                      />
+                    )}
+                  </button>
+                </div>
               </div>
 
               {/* API Key */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                  OpenAI API Key
+                  {aiProvider === "anthropic"
+                    ? "Anthropic API Key"
+                    : "OpenAI API Key"}
                 </label>
                 <div className="relative">
                   <Key
@@ -197,7 +274,9 @@ const SettingsPage = () => {
                   />
                   <input
                     type={showApiKey ? "text" : "password"}
-                    placeholder={apiKey ? "••••••••  (key saved)" : "sk-..."}
+                    placeholder={
+                      activeApiKey ? "••••••••  (key saved)" : "sk-..."
+                    }
                     className="w-full pl-9 pr-10 py-2.5 bg-slate-50 dark:bg-surface-dark border border-slate-200 dark:border-border-brand rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all text-sm dark:text-slate-200"
                     value={apiKeyInput}
                     onChange={(e) => setApiKeyInput(e.target.value)}
@@ -210,7 +289,7 @@ const SettingsPage = () => {
                     {showApiKey ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
-                {apiKey && !apiKeyInput && (
+                {activeApiKey && !apiKeyInput && (
                   <p className="text-xs text-green-500 font-medium flex items-center gap-1 pt-0.5">
                     <CheckCircle2 size={12} /> API Key is saved.
                   </p>
@@ -220,22 +299,40 @@ const SettingsPage = () => {
               {/* Model */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                  OpenAI Model
+                  Model Selection
                 </label>
                 <select
                   value={selectedModel}
                   onChange={(e) => setSelectedModel(e.target.value)}
                   className="w-full px-4 py-2.5 bg-slate-50 dark:bg-surface-dark border border-slate-200 dark:border-border-brand rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all text-sm dark:text-slate-200"
                 >
-                  <option value="gpt-4o">gpt-4o — Most Capable</option>
-                  <option value="gpt-4o-mini">
-                    gpt-4o-mini — Faster & Cheaper
-                  </option>
-                  <option value="gpt-4-turbo">
-                    gpt-4-turbo — Reliable & Powerful
-                  </option>
-                  <option value="o3-mini">o3-mini — Advanced Reasoning</option>
-                  <option value="o1">o1 — Complex Reasoning</option>
+                  {aiProvider === "anthropic" ? (
+                    <>
+                      <option value="claude-opus-4-6">
+                        Claude Opus 4.6 — Most Capable
+                      </option>
+                      <option value="claude-sonnet-4-6">
+                        Claude Sonnet 4.6 — Balanced Performance & Cost
+                      </option>
+                      <option value="claude-haiku-4-5-20251001">
+                        Claude Haiku 4.5 — Fastest & Most Cost-Efficient
+                      </option>
+                    </>
+                  ) : (
+                    <>
+                      <option value="gpt-4o">gpt-4o — Most Capable</option>
+                      <option value="gpt-4o-mini">
+                        gpt-4o-mini — Faster & Cheaper
+                      </option>
+                      <option value="gpt-4-turbo">
+                        gpt-4-turbo — Reliable & Powerful
+                      </option>
+                      <option value="o3-mini">
+                        o3-mini — Advanced Reasoning
+                      </option>
+                      <option value="o1">o1 — Complex Reasoning</option>
+                    </>
+                  )}
                 </select>
               </div>
 
@@ -263,7 +360,7 @@ const SettingsPage = () => {
                 >
                   Save Settings
                 </button>
-                {apiKey && (
+                {activeApiKey && (
                   <button
                     onClick={handleClearApiKey}
                     className="flex items-center gap-2 px-5 py-2.5 bg-slate-100 dark:bg-slate-700 hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-600 dark:text-slate-300 hover:text-red-600 dark:hover:text-red-400 font-medium rounded-xl transition-colors text-sm"
