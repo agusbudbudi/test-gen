@@ -12,7 +12,7 @@ export function useBugReport() {
   const bugData = useResultStore((state) => state.bugResult)
   const setBugData = useResultStore((state) => state.setBugResult)
   
-  const { apiKey, selectedModel } = useUIStore()
+  const { apiKey, anthropicApiKey, aiProvider, selectedModel } = useUIStore()
   const addHistory = useHistoryStore((state) => state.addEntry)
   const addToast = useToastStore((state) => state.addToast)
 
@@ -22,7 +22,8 @@ export function useBugReport() {
       return
     }
 
-    if (!apiKey) {
+    const activeApiKey = aiProvider === 'anthropic' ? anthropicApiKey : apiKey
+    if (!activeApiKey) {
       addToast('API Key is missing!', 'warning')
       return
     }
@@ -59,7 +60,8 @@ ${bugDetails}`
         model: selectedModel,
         messages: [{ role: 'user', content: prompt }],
         ...(selectedModel.startsWith('o') ? {} : { temperature: 0.1 }), // Lower temperature for more consistent JSON
-      }, apiKey)
+        provider: aiProvider
+      }, activeApiKey)
 
       const resultText = data.choices?.[0]?.message?.content || ''
       
@@ -96,7 +98,7 @@ ${bugDetails}`
     } finally {
       setLoading(false)
     }
-  }, [apiKey, addToast, addHistory, setBugData, selectedModel])
+  }, [apiKey, anthropicApiKey, aiProvider, addToast, addHistory, setBugData, selectedModel])
 
   return { generateReport, loading, bugData }
 }

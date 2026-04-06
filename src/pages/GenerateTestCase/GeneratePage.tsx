@@ -64,7 +64,7 @@ const GeneratePage = () => {
     selectedModel,
     selectedTemplateId,
   } = useUIStore()
-  const { generate, loading, resultData, setResultData } = useGenerateTestCase()
+  const { generate, cancel, loading, resultData, setResultData } = useGenerateTestCase()
   const { importFromJira, importing } = useJiraImport()
   const addHistory = useHistoryStore((state) => state.addEntry)
   const addTestCase = useTestCaseStore((state) => state.addTestCase)
@@ -225,8 +225,8 @@ ${data.description}`
       return
     }
     
-    // Convert to TSV string for easy pasting into Sheets/Excel
-    const tsv = resultData
+    // Convert to TSV string for easy pasting into Sheets/Excel (excluding headers)
+    const tsv = resultData.slice(1)
       .map(row => 
         row.map(cell => {
           const cellStr = String(cell || '')
@@ -413,18 +413,28 @@ ${data.description}`
                   Review with AI
                 </button>
               )}
-              <button
-                onClick={handleGenerate}
-                disabled={loading || importing}
-                className="flex-1 flex items-center justify-center gap-2 py-3 bg-primary hover:bg-primary-hover text-white font-semibold text-sm rounded-xl transition-all disabled:opacity-70 disabled:cursor-not-allowed"
-              >
-                {(loading || importing) ? (
+              {loading ? (
+                <button
+                  onClick={cancel}
+                  className="flex-1 flex items-center justify-center gap-2 py-3 bg-red-500 hover:bg-red-600 text-white font-semibold text-sm rounded-xl transition-all"
+                >
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <Sparkles size={18} />
-                )}
-                {(loading || importing) ? (importing ? 'Fetching from Jira...' : 'Generating...') : 'Generate Test Cases'}
-              </button>
+                  Cancel Generation
+                </button>
+              ) : (
+                <button
+                  onClick={handleGenerate}
+                  disabled={importing}
+                  className="flex-1 flex items-center justify-center gap-2 py-3 bg-primary hover:bg-primary-hover text-white font-semibold text-sm rounded-xl transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+                >
+                  {importing ? (
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <Sparkles size={18} />
+                  )}
+                  {importing ? 'Fetching from Jira...' : 'Generate Test Cases'}
+                </button>
+              )}
             </div>
           </div>
         </div>

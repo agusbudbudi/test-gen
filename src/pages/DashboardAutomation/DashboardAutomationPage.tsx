@@ -83,7 +83,10 @@ const DashboardAutomationPage = () => {
 
   // Data processing for charts
   const dashboardData = useMemo(() => {
-    if (!latest)
+    // Determine the source of truth for "latest" run
+    const currentRun = latest || (runs.length > 0 ? runs[0] : null);
+
+    if (!currentRun)
       return {
         failureRate: 0,
         passFailData: [],
@@ -103,9 +106,9 @@ const DashboardAutomationPage = () => {
         trendStatus: "stable" as const,
       };
 
-    const s = latest.summary;
+    const s = currentRun.summary;
     const failRate = s.total
-      ? Number(((s.failed + s.broken) / s.total) * 100)
+      ? Number(((s.failed + (s.broken || 0)) / s.total) * 100)
       : 0;
 
     const pfData = [
@@ -114,7 +117,7 @@ const DashboardAutomationPage = () => {
     ];
 
     // Duration Distribution (5s buckets)
-    const tests = latest.tests || [];
+    const tests = currentRun.tests || [];
     const maxSec = Math.max(
       0,
       ...tests.map((t: any) => Number((t.duration || 0) / 1000)),
@@ -233,6 +236,7 @@ const DashboardAutomationPage = () => {
     const readinessScore = Math.max(0, Math.min(100, Math.round(s.passRate - criticalPenalty - brokenPenalty - flakyPenalty + trendBonus)));
 
     return {
+      currentRun,
       failureRate: failRate,
       passFailData: pfData,
       durationDistribution: durDist,
@@ -275,6 +279,7 @@ const DashboardAutomationPage = () => {
   }, [latest, trend, durationTrend, categoriesTrend, runs]);
 
   const {
+    currentRun,
     failureRate,
     passFailData,
     durationDistribution,
@@ -331,11 +336,11 @@ const DashboardAutomationPage = () => {
         </div>
 
         <div className="flex items-center gap-3">
-          {latest && (
+          {currentRun && (
             <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 dark:bg-surface-dark rounded-lg border border-slate-200 dark:border-border-brand">
               <History className="w-4 h-4 text-slate-400" />
               <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 truncate">
-                Latest: {dayjs(latest.createdAt).format("MMM DD, HH:mm")}
+                Latest: {dayjs(currentRun.createdAt).format("MMM DD, HH:mm")}
               </span>
             </div>
           )}
@@ -354,7 +359,7 @@ const DashboardAutomationPage = () => {
         </div>
       </div>
 
-      {!latest ? (
+      {!currentRun ? (
         <div className="p-12 border-2 border-dashed border-slate-200 dark:border-border-brand/40 rounded-3xl flex flex-col items-center justify-center text-center space-y-4 bg-slate-50/50 dark:bg-surface-dark/10">
           <div className="w-16 h-16 bg-white dark:bg-surface-dark rounded-2xl flex items-center justify-center text-slate-300 dark:text-slate-700">
             <LayoutDashboard className="w-8 h-8" />
@@ -380,7 +385,7 @@ const DashboardAutomationPage = () => {
 
           {/* Summary Section */}
           <ExecutionSummary
-            summary={latest.summary}
+            summary={currentRun.summary}
             failureRate={failureRate}
             formatDuration={formatDuration}
             passFailData={passFailData}
@@ -389,7 +394,7 @@ const DashboardAutomationPage = () => {
             insights={insights}
             onInsightClick={(type) => {
               const filterValue = type === "infraIssues" ? "broken" : type;
-              navigate(`/automation/runs/${latest.runId}?tab=tests&filter=${filterValue}`);
+              navigate(`/automation/runs/${currentRun.runId}?tab=tests&filter=${filterValue}`);
             }}
           />
 

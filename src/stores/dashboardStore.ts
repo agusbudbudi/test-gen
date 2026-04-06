@@ -57,17 +57,25 @@ export const useDashboardStore = create<DashboardState>((set) => ({
   aiAssessment: '',
   aiRootCause: '',
 
-  setData: (data) => set({
-    latest: data.latest || null,
-    trend: data.trend || [],
-    suites: data.suites || [],
-    runs: data.runs || [],
-    statusBuckets: data.buckets || [],
-    durationTrend: data.durations || [],
-    categoriesTrend: data.categories || [],
-    lastSync: data.lastSync || null,
-    isInitialLoaded: true,
-  }),
+  setData: (data) => {
+    const sortLatestFirst = (a: Run, b: Run) => 
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+
+    const sortedRuns = (data.runs || []).sort(sortLatestFirst);
+    const sortedTrend = (data.trend || []).sort(sortLatestFirst);
+
+    set({
+      latest: data.latest || (sortedRuns.length > 0 ? sortedRuns[0] : null),
+      trend: sortedTrend,
+      suites: data.suites || [],
+      runs: sortedRuns,
+      statusBuckets: data.buckets || [],
+      durationTrend: data.durations || [],
+      categoriesTrend: data.categories || [],
+      lastSync: data.lastSync || null,
+      isInitialLoaded: true,
+    });
+  },
 
   setInitialLoaded: (loaded) => set({ isInitialLoaded: loaded }),
   

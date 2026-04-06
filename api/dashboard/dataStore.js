@@ -13,7 +13,7 @@ export class DataStore {
 
   async load() {
     await connectDB();
-    return await Run.find().sort({ createdAt: -1 }).lean();
+    return await Run.find().sort({ runId: -1 }).lean();
   }
 
   async getRuns(filters = {}) {
@@ -31,12 +31,12 @@ export class DataStore {
       }
     }
 
-    return await Run.find(query).sort({ createdAt: -1 }).lean();
+    return await Run.find(query).sort({ runId: -1 }).lean();
   }
 
   async getLatestRun() {
     await connectDB();
-    return await Run.findOne().sort({ createdAt: -1 }).lean();
+    return await Run.findOne().sort({ runId: -1 }).lean();
   }
 
   async getRunById(runId) {
@@ -48,7 +48,7 @@ export class DataStore {
     await connectDB();
     const runs = await Run.find()
       .select('runId createdAt summary')
-      .sort({ createdAt: -1 })
+      .sort({ runId: -1 })
       .limit(limit)
       .lean();
     return runs;

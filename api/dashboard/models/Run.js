@@ -58,6 +58,7 @@ const RunSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 // Indexing for faster lookups
-RunSchema.index({ createdAt: -1 });
+RunSchema.index({ runId: -1 });
+RunSchema.index({ createdAt: -1 }); // Keep for date range queries
 
 export const Run = mongoose.models.Run || mongoose.model('Run', RunSchema);

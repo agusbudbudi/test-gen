@@ -4,9 +4,10 @@ export interface ChatPayload {
   temperature?: number
   response_format?: { type: 'json_object' | 'text' }
   stream?: boolean
+  provider?: string
 }
 
-export async function fetchChat(payload: ChatPayload, apiKey?: string) {
+export async function fetchChat(payload: ChatPayload, apiKey?: string, options?: { signal?: AbortSignal }) {
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
   }
@@ -19,6 +20,7 @@ export async function fetchChat(payload: ChatPayload, apiKey?: string) {
     method: 'POST',
     headers,
     body: JSON.stringify(payload),
+    signal: options?.signal,
   })
 
   if (!response.ok) {
@@ -32,7 +34,8 @@ export async function fetchChat(payload: ChatPayload, apiKey?: string) {
 export async function fetchChatStream(
   payload: ChatPayload, 
   apiKey: string | undefined, 
-  onChunk: (text: string) => void
+  onChunk: (text: string) => void,
+  options?: { signal?: AbortSignal }
 ) {
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
@@ -46,6 +49,7 @@ export async function fetchChatStream(
     method: 'POST',
     headers,
     body: JSON.stringify({ ...payload, stream: true }),
+    signal: options?.signal,
   })
 
   if (!response.ok) {

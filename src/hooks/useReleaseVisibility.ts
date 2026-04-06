@@ -16,8 +16,10 @@ export interface Ticket {
 export function useReleaseVisibility() {
   const [loading, setLoading] = useState(false);
   const [tickets, setTickets] = useState<Ticket[]>([]);
-  const { jiraUrl, jiraEmail, jiraToken, apiKey, selectedModel } = useUIStore();
+  const { jiraUrl, jiraEmail, jiraToken, apiKey, anthropicApiKey, aiProvider, selectedModel } = useUIStore();
   const addToast = useToastStore((state) => state.addToast);
+
+  const activeApiKey = aiProvider === 'anthropic' ? anthropicApiKey : apiKey;
 
   const updateTicket = (key: string, updates: Partial<Ticket>) => {
     setTickets((prev) =>
@@ -26,7 +28,7 @@ export function useReleaseVisibility() {
   };
 
   const refreshTicketAI = async (ticket: Ticket) => {
-    if (!apiKey) {
+    if (!activeApiKey) {
       addToast("API Key is missing!", "warning");
       return;
     }
@@ -53,11 +55,14 @@ Return your response in JSON format: { "area": "...", "demoFlow": "..." }`,
           ],
           temperature: 0,
           response_format: { type: "json_object" },
+          provider: aiProvider,
         },
-        apiKey,
+        activeApiKey,
       );
 
-      const parsed = JSON.parse(aiRes.choices?.[0]?.message?.content || "{}");
+      const content = aiRes.choices?.[0]?.message?.content || "{}";
+      const jsonString = content.replace(/```json\n?|```/g, "").trim();
+      const parsed = JSON.parse(jsonString);
       updateTicket(ticket.key, {
         area: parsed.area || "General",
         demoFlow: Array.isArray(parsed.demoFlow)
@@ -79,7 +84,7 @@ Return your response in JSON format: { "area": "...", "demoFlow": "..." }`,
       return;
     }
 
-    if (!apiKey) {
+    if (!activeApiKey) {
       addToast("API Key is missing! Please set it in the sidebar.", "warning");
       return;
     }
@@ -220,11 +225,14 @@ Return a JSON object where keys are the Ticket Keys and values are { "area": "..
               ],
               temperature: 0,
               response_format: { type: "json_object" },
+              provider: aiProvider,
             },
-            apiKey,
+            activeApiKey,
           );
 
-          const results = JSON.parse(aiRes.choices?.[0]?.message?.content || "{}");
+          const content = aiRes.choices?.[0]?.message?.content || "{}";
+          const jsonString = content.replace(/```json\n?|```/g, "").trim();
+          const results = JSON.parse(jsonString);
           
           setTickets(prev => prev.map(t => {
             if (results[t.key]) {
