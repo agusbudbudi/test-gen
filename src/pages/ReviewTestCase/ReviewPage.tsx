@@ -13,23 +13,33 @@ import { useTestCaseStore } from '@/stores/testCaseStore'
 import { useEffect } from 'react'
 import { History as HistoryIcon } from 'lucide-react'
 import AddToFolderModal from '@/pages/GenerateTestCase/components/AddToFolderModal'
+import { useRef } from 'react'
 
 const ReviewPage = () => {
   const [testCaseInput, setTestCaseInput] = useState('')
   const [isAddToFolderModalOpen, setIsAddToFolderModalOpen] = useState(false)
-  const { review, loading, reviewResult } = useReviewTestCase()
+  const { review, cancel, loading, reviewResult } = useReviewTestCase()
   const addHistory = useHistoryStore((state) => state.addEntry) 
   const addTestCase = useTestCaseStore((state) => state.addTestCase)
   const toast = useToast()
 
   const pendingReviewInput = useResultStore(state => state.pendingReviewInput)
   const setPendingReviewInput = useResultStore(state => state.setPendingReviewInput)
+  const triggeredRef = useRef<string | null>(null)
 
+  // Avoid flash of "Review Test Case" button when page loads and starts a review automatically
+  const isReviewing = loading || !!pendingReviewInput
   useEffect(() => {
-    if (pendingReviewInput) {
+    if (pendingReviewInput && triggeredRef.current !== pendingReviewInput) {
+      triggeredRef.current = pendingReviewInput
       setTestCaseInput(pendingReviewInput)
-      review(pendingReviewInput)
-      setPendingReviewInput(null)
+      review(pendingReviewInput).then(started => {
+        if (started) {
+          setPendingReviewInput(null)
+        } else {
+          triggeredRef.current = null // Reset so it can retry (e.g. after hydration)
+        }
+      })
     }
   }, [pendingReviewInput, review, setPendingReviewInput])
 
@@ -72,11 +82,8 @@ const ReviewPage = () => {
       return
     }
 
-    const headers = ['No', 'Section', 'Case Type', 'Title', 'Precondition', 'Step', 'Expected Result']
-    
-    // Map data to TSV format, skipping index 0 (Status)
+    // Map data to TSV format, skipping index 0 (Status) and excluding headers
     const tsv = [
-      headers.join('\t'),
       ...reviewResult.improvedVersion.map(row => [
         String(row.No || ''),
         String(row.Section || ''),
@@ -163,18 +170,23 @@ const ReviewPage = () => {
             </label>
           </div>
           
-          <button
-            onClick={handleReview}
-            disabled={loading}
-            className="flex items-center justify-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary-hover text-white font-semibold text-sm rounded-xl transition-all shadow-[0_8px_16px_-4px_rgba(var(--color-primary-rgb),0.2)] disabled:opacity-70 disabled:cursor-not-allowed hover-scale w-full sm:w-auto"
-          >
-            {loading ? (
+          {isReviewing ? (
+            <button
+              onClick={cancel}
+              className="flex items-center justify-center gap-2 px-5 py-2.5 bg-red-500 hover:bg-red-600 text-white font-semibold text-sm rounded-xl transition-all w-full sm:w-auto"
+            >
               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-            ) : (
+              Cancel Review
+            </button>
+          ) : (
+            <button
+              onClick={handleReview}
+              className="flex items-center justify-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary-hover text-white font-semibold text-sm rounded-xl transition-all shadow-[0_8px_16px_-4px_rgba(var(--color-primary-rgb),0.2)] w-full sm:w-auto"
+            >
               <Bot size={20} />
-            )}
-            {loading ? 'Reviewing...' : 'Review Test Case'}
-          </button>
+              Review Test Case
+            </button>
+          )}
         </div>
       </div>
 

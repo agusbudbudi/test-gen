@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import { useUIStore } from '@/stores/uiStore'
 import { useHistoryStore } from '@/stores/historyStore'
 import { useToastStore } from '@/stores/toastStore'
@@ -9,6 +9,13 @@ export function useGenerateTestCase() {
   const [loading, setLoading] = useState(false)
   const resultData = useResultStore((state) => state.generateResult)
   const setResultData = useResultStore((state) => state.setGenerateResult)
+  const abortControllerRef = useRef<AbortController | null>(null)
+
+  const cancel = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+    }
+  }, [])
   
   const { apiKey, anthropicApiKey, aiProvider, promptInstructions, selectedModel, defaultTestCaseCount } = useUIStore()
   const addHistory = useHistoryStore((state) => state.addEntry)
@@ -37,6 +44,11 @@ export function useGenerateTestCase() {
     setLoading(true)
     setResultData(null)
 
+    cancel()
+    const controller = new AbortController()
+    abortControllerRef.current = controller
+    const currentSignal = controller.signal
+
     const combinedPrompt = `You are a professional QA engineer. Generate minimum ${count} and maximum as many as possible comprehensive test cases based on the provided requirements.
 
 ### OUTPUT RULES:
@@ -62,7 +74,7 @@ ${promptInstructions}
         provider: aiProvider,
         messages: [{ role: 'user', content: combinedPrompt }],
         ...(model.startsWith('o') ? {} : { temperature: 0.1 }),
-      }, activeApiKey)
+      }, activeApiKey, { signal: currentSignal })
 
       const resultText = data.choices?.[0]?.message?.content || ''
       const jsonString = resultText.replace(/```json\n?|```/g, '').trim()
@@ -91,12 +103,19 @@ ${promptInstructions}
         addToast('No test cases generated or invalid format.', 'warning')
       }
     } catch (error: any) {
+      if (error.name === 'AbortError') {
+        addToast('Generation cancelled.', 'info')
+        return
+      }
       console.error('Test case generation failed:', error)
       addToast(error.message || 'Failed to generate test cases', 'error')
     } finally {
-      setLoading(false)
+      if (abortControllerRef.current?.signal === currentSignal) {
+        setLoading(false)
+        abortControllerRef.current = null
+      }
     }
-  }, [apiKey, anthropicApiKey, aiProvider, promptInstructions, selectedModel, defaultTestCaseCount, addHistory, addToast, setResultData])
+  }, [apiKey, anthropicApiKey, aiProvider, promptInstructions, selectedModel, defaultTestCaseCount, addHistory, addToast, setResultData, cancel])
 
-  return { generate, loading, resultData, setResultData }
+  return { generate, cancel, loading, resultData, setResultData }
 }

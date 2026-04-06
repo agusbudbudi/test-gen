@@ -24,6 +24,7 @@ import {
 import { useUIStore } from "@/stores/uiStore";
 import { useThemeStore } from "@/stores/themeStore";
 import { cn } from "@/lib/utils";
+import Tooltip from "@/components/Tooltip/Tooltip";
 
 const Sidebar = () => {
   const {
@@ -155,42 +156,48 @@ const Sidebar = () => {
 
               <div className="space-y-0.5">
                 {section.items.map((item) => (
-                  <NavLink
-                    key={item.to}
-                    to={item.to}
-                    onClick={closeMobileMenu}
-                    className={({ isActive }) =>
-                      cn(
-                        "flex items-center gap-2.5 px-3 rounded-lg transition-all group relative duration-200 overflow-hidden",
-                        sidebarCollapsed ? "py-2" : "py-1.5",
-                        isActive
-                          ? "bg-primary/10 text-primary dark:text-primary-foreground dark:bg-primary/20"
-                          : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-primary/5 hover:text-slate-900 dark:hover:text-slate-200",
-                      )
-                    }
+                  <Tooltip 
+                    key={item.to} 
+                    content={item.label} 
+                    position="right" 
+                    disabled={!sidebarCollapsed || isMobileMenuOpen}
                   >
-                    {({ isActive }) => (
-                      <>
-                        {isActive && (
-                          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-primary rounded-r-full shadow-[0_0_8px_rgba(var(--primary),0.4)]" />
-                        )}
-                        <item.icon
-                          size={16}
-                          className={cn(
-                            "flex-shrink-0 transition-all duration-300",
-                            isActive
-                              ? "scale-105"
-                              : "opacity-70 group-hover:opacity-100",
+                    <NavLink
+                      to={item.to}
+                      onClick={closeMobileMenu}
+                      className={({ isActive }) =>
+                        cn(
+                          "flex items-center gap-2.5 px-3 rounded-lg transition-all group relative duration-200 overflow-hidden w-full",
+                          sidebarCollapsed ? "py-2" : "py-1.5",
+                          isActive
+                            ? "bg-primary/10 text-primary dark:text-primary-foreground dark:bg-primary/20"
+                            : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-primary/5 hover:text-slate-900 dark:hover:text-slate-200",
+                        )
+                      }
+                    >
+                      {({ isActive }) => (
+                        <>
+                          {isActive && (
+                            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-primary rounded-r-full shadow-[0_0_8px_rgba(var(--primary),0.4)]" />
                           )}
-                        />
-                        {(!sidebarCollapsed || isMobileMenuOpen) && (
-                          <span className="font-medium text-[13px] whitespace-nowrap animate-in fade-in slide-in-from-left-1 duration-300">
-                            {item.label}
-                          </span>
-                        )}
-                      </>
-                    )}
-                  </NavLink>
+                          <item.icon
+                            size={16}
+                            className={cn(
+                              "flex-shrink-0 transition-all duration-300",
+                              isActive
+                                ? "scale-105"
+                                : "opacity-70 group-hover:opacity-100",
+                            )}
+                          />
+                          {(!sidebarCollapsed || isMobileMenuOpen) && (
+                            <span className="font-medium text-[13px] whitespace-nowrap animate-in fade-in slide-in-from-left-1 duration-300">
+                              {item.label}
+                            </span>
+                          )}
+                        </>
+                      )}
+                    </NavLink>
+                  </Tooltip>
                 ))}
               </div>
             </div>
@@ -199,18 +206,24 @@ const Sidebar = () => {
 
         {/* Bottom Actions */}
         <div className="p-2.5 space-y-0.5 border-t border-slate-100 dark:border-border-brand">
-          <button
-            onClick={toggleTheme}
-            className="w-full flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-slate-700 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-primary/10 hover:text-slate-900 dark:hover:text-slate-200 transition-all group"
-            title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+          <Tooltip 
+            content={isDarkMode ? "Light Mode" : "Dark Mode"} 
+            position="right" 
+            disabled={!sidebarCollapsed || isMobileMenuOpen}
           >
-            {isDarkMode ? <Sun size={16} /> : <Moon size={16} />}
-            {(!sidebarCollapsed || isMobileMenuOpen) && (
-              <span className="font-medium text-[13px] whitespace-nowrap">
-                {isDarkMode ? "Light Mode" : "Dark Mode"}
-              </span>
-            )}
-          </button>
+            <button
+              onClick={toggleTheme}
+              className="w-full flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-slate-700 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-primary/10 hover:text-slate-900 dark:hover:text-slate-200 transition-all group"
+              title={(!sidebarCollapsed || isMobileMenuOpen) ? (isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode") : undefined}
+            >
+              {isDarkMode ? <Sun size={16} /> : <Moon size={16} />}
+              {(!sidebarCollapsed || isMobileMenuOpen) && (
+                <span className="font-medium text-[13px] whitespace-nowrap">
+                  {isDarkMode ? "Light Mode" : "Dark Mode"}
+                </span>
+              )}
+            </button>
+          </Tooltip>
         </div>
 
         {/* Power by */}
