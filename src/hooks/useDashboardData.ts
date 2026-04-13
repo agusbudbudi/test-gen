@@ -34,16 +34,12 @@ export function useDashboardData() {
 
   useEffect(() => {
     let isMounted = true;
-    
-    // If already loaded, don't show loading spinner but still refresh in background if needed
-    // For now, if loaded, we skip the initial fetch to make transitions instant
-    if (isInitialLoaded) {
-      setLoading(false);
-      return;
-    }
 
     async function fetchData() {
-      setLoading(true);
+      // Only show the loading spinner on the very first load
+      if (!isInitialLoaded) {
+        setLoading(true);
+      }
       try {
         const res = await axios.get(`${API_BASE}/runs/all`);
         
@@ -53,7 +49,10 @@ export function useDashboardData() {
         setError(null);
       } catch (err) {
         if (!isMounted) return;
-        setError(err);
+        // Only surface the error if we have no data to show
+        if (!isInitialLoaded) {
+          setError(err);
+        }
       } finally {
         if (isMounted) setLoading(false);
       }
@@ -64,7 +63,8 @@ export function useDashboardData() {
     return () => {
       isMounted = false;
     };
-  }, [isInitialLoaded, setData]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const syncData = async () => {
     setIsSyncing(true);
