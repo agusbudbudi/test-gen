@@ -1,28 +1,33 @@
-import React from 'react'
-import { cn } from '@/lib/utils'
+import React from "react";
+import { cn } from "@/lib/utils";
 
 interface ResultTableProps {
-  headers: string[]
-  rows: string[][]
-  minWidth?: string
-  compact?: boolean
+  headers: string[];
+  rows: string[][];
+  minWidth?: string;
+  compact?: boolean;
 }
 
-const ResultTable: React.FC<ResultTableProps> = ({ headers, rows, minWidth = '1200px', compact = false }) => {
+const ResultTable: React.FC<ResultTableProps> = ({
+  headers,
+  rows,
+  minWidth = "1200px",
+  compact = false,
+}) => {
   return (
-    <div className="w-full max-w-full overflow-x-auto rounded-xl border border-slate-200 dark:border-border-brand">
-      <table 
+    <div className="w-full max-w-full overflow-x-auto rounded-xl">
+      <table
         style={{ minWidth: minWidth }}
         className="w-full text-sm text-left border-collapse bg-white dark:bg-surface-card"
       >
         <thead className="bg-slate-50 dark:bg-primary/10 text-slate-700 dark:text-slate-200 font-semibold uppercase tracking-wider text-xs">
           <tr>
             {headers.map((header, idx) => (
-              <th 
-                key={idx} 
+              <th
+                key={idx}
                 className={cn(
                   "border-b border-slate-200 dark:border-border-brand",
-                  compact ? "px-3 py-3" : "px-6 py-4"
+                  compact ? "px-3 py-3" : "px-6 py-4",
                 )}
               >
                 {header}
@@ -32,45 +37,47 @@ const ResultTable: React.FC<ResultTableProps> = ({ headers, rows, minWidth = '12
         </thead>
         <tbody className="divide-y divide-slate-200 dark:divide-border-brand">
           {rows.map((row, rowIdx) => (
-            <tr 
-              key={rowIdx} 
+            <tr
+              key={rowIdx}
               className="hover:bg-slate-50 dark:hover:bg-primary/5 transition-colors"
             >
               {row.map((cell, cellIdx) => {
-                const isStatus = cell === 'New' || cell === 'Improved'
-                
+                const isStatus = cell === "New" || cell === "Improved";
+
                 return (
-                  <td 
-                    key={cellIdx} 
+                  <td
+                    key={cellIdx}
                     className={cn(
                       "text-slate-600 dark:text-slate-300 align-top",
-                      compact ? "px-3 py-3" : "px-6 py-4"
+                      compact ? "px-3 py-3" : "px-6 py-4",
                     )}
                   >
                     {isStatus ? (
-                      <span className={cn(
-                        "inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider",
-                        cell === 'New' 
-                          ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800" 
-                          : "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800"
-                      )}>
+                      <span
+                        className={cn(
+                          "inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider",
+                          cell === "New"
+                            ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800"
+                            : "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800",
+                        )}
+                      >
                         {cell}
                       </span>
                     ) : (
-                      <div 
+                      <div
                         className="whitespace-pre-wrap leading-relaxed"
                         dangerouslySetInnerHTML={{ __html: cell }}
                       />
                     )}
                   </td>
-                )
+                );
               })}
             </tr>
           ))}
         </tbody>
       </table>
     </div>
-  )
-}
+  );
+};
 
-export default React.memo(ResultTable)
+export default React.memo(ResultTable);

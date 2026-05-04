@@ -259,7 +259,7 @@ ${data.description}`
       </div>
 
       {/* 2-Column Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6 items-start">
 
         {/* ── LEFT COLUMN: Main Input Area ── */}
         <div className="space-y-0 bg-white dark:bg-surface-card border border-slate-200 dark:border-border-brand rounded-2xl overflow-hidden">
@@ -480,7 +480,7 @@ ${data.description}`
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate">{item.title}</p>
-                <p className="text-xs text-slate-400 dark:text-slate-500 leading-snug line-clamp-1 mt-0.5">{item.desc}</p>
+                <p className="text-xs text-slate-400 dark:text-slate-500 leading-snug mt-0.5">{item.desc}</p>
               </div>
       </button>
     ))}

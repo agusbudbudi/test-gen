@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Key,
   Layers,
@@ -22,6 +22,15 @@ const SettingsPage = () => {
   const [showJiraToken, setShowJiraToken] = useState(false);
   const [showConfluenceToken, setShowConfluenceToken] = useState(false);
   const toast = useToast();
+
+  // Handle deep linking via tab parameter
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get('tab') as Tab;
+    if (tab && ['general', 'jira', 'confluence'].includes(tab)) {
+      setActiveTab(tab);
+    }
+  }, []);
 
   const {
     apiKey,

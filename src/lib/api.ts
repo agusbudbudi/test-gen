@@ -1,6 +1,18 @@
+// Vision content part types for OpenAI
+export type OpenAIVisionPart =
+  | { type: 'text'; text: string }
+  | { type: 'image_url'; image_url: { url: string; detail?: 'auto' | 'low' | 'high' } }
+
+// Vision content part types for Anthropic
+export type AnthropicVisionPart =
+  | { type: 'text'; text: string }
+  | { type: 'image'; source: { type: 'base64'; media_type: string; data: string } }
+
+export type VisionContentPart = OpenAIVisionPart | AnthropicVisionPart
+
 export interface ChatPayload {
   model: string
-  messages: { role: string; content: string }[]
+  messages: { role: string; content: string | VisionContentPart[] }[]
   temperature?: number
   response_format?: { type: 'json_object' | 'text' }
   stream?: boolean
