@@ -85,7 +85,7 @@ app.post("/api/chat", async (req, res) => {
               "anthropic-version": "2023-06-01"
             },
             responseType: 'stream',
-            timeout: 60000,
+            timeout: 300000,
           }
         );
 
@@ -145,7 +145,7 @@ app.post("/api/chat", async (req, res) => {
             "x-api-key": apiKey,
             "anthropic-version": "2023-06-01"
           },
-          timeout: 60000,
+          timeout: 300000,
         }
       );
 
@@ -164,16 +164,20 @@ app.post("/api/chat", async (req, res) => {
     // Handle streaming
     if (cleanPayload.stream) {
       console.log('Starting AI stream for model:', cleanPayload.model);
+      const streamPayload = { ...cleanPayload };
+      if (!streamPayload.max_tokens) {
+        streamPayload.max_tokens = 16384;
+      }
       const r = await axios.post(
         "https://api.openai.com/v1/chat/completions",
-        cleanPayload,
+        streamPayload,
         {
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${apiKey}`,
           },
           responseType: 'stream',
-          timeout: 60000,
+          timeout: 120000,
         }
       );
 
@@ -202,15 +206,20 @@ app.post("/api/chat", async (req, res) => {
       return;
     }
 
+    const openaiPayload = { ...cleanPayload };
+    if (!openaiPayload.max_tokens) {
+      openaiPayload.max_tokens = 16384;
+    }
+
     const r = await axios.post(
       "https://api.openai.com/v1/chat/completions",
-      cleanPayload,
+      openaiPayload,
       {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${apiKey}`,
         },
-        timeout: 60000,
+        timeout: 120000,
       }
     );
 

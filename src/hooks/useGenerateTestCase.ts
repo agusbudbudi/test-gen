@@ -78,7 +78,12 @@ ${promptInstructions}
 
       const resultText = data.choices?.[0]?.message?.content || ''
       const jsonString = resultText.replace(/```json\n?|```/g, '').trim()
-      const parsedJson = JSON.parse(jsonString)
+      let parsedJson
+      try {
+        parsedJson = JSON.parse(jsonString)
+      } catch (parseError) {
+        throw new Error('AI response was truncated. Try reducing the test case count or use a model with higher token limits.')
+      }
 
       if (Array.isArray(parsedJson) && parsedJson.length > 0) {
         const headers = ["No", "Section", "Case Type", "Title", "Precondition", "Step", "Expected Result"]
