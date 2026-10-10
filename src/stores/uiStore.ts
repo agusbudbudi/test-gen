@@ -2,7 +2,11 @@ import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import { idbStorage } from '@/lib/idbStorage'
 
+export type Workspace = 'fithub' | 'diricare'
+
 interface UIState {
+  workspace: Workspace
+  setWorkspace: (workspace: Workspace) => void
   sidebarCollapsed: boolean
   toggleSidebar: () => void
   setSidebarCollapsed: (collapsed: boolean) => void
@@ -42,6 +46,14 @@ interface UIState {
   setConfluenceSpaceKey: (key: string) => void
   confluenceParentPageId: string
   setConfluenceParentPageId: (id: string) => void
+  // Slack Integration
+  slackBotToken: string
+  setSlackBotToken: (token: string) => void
+  clearSlackBotToken: () => void
+  slackChannel: string
+  setSlackChannel: (channel: string) => void
+  slackNotificationsEnabled: boolean
+  setSlackNotificationsEnabled: (enabled: boolean) => void
   // Modals
   isPromptModalOpen: boolean
   setPromptModalOpen: (open: boolean) => void
@@ -60,6 +72,8 @@ interface UIState {
 export const useUIStore = create<UIState>()(
   persist(
     (set) => ({
+      workspace: 'fithub',
+      setWorkspace: (workspace) => set({ workspace }),
       sidebarCollapsed: false,
       toggleSidebar: () => set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
       setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
@@ -104,6 +118,14 @@ export const useUIStore = create<UIState>()(
       setConfluenceSpaceKey: (key) => set({ confluenceSpaceKey: key }),
       confluenceParentPageId: '',
       setConfluenceParentPageId: (id) => set({ confluenceParentPageId: id }),
+      // Slack Integration
+      slackBotToken: '',
+      setSlackBotToken: (token) => set({ slackBotToken: token }),
+      clearSlackBotToken: () => set({ slackBotToken: '' }),
+      slackChannel: '',
+      setSlackChannel: (channel) => set({ slackChannel: channel }),
+      slackNotificationsEnabled: false,
+      setSlackNotificationsEnabled: (enabled) => set({ slackNotificationsEnabled: enabled }),
       // Modals
       isPromptModalOpen: false,
       setPromptModalOpen: (open) => set({ isPromptModalOpen: open }),
@@ -122,6 +144,7 @@ export const useUIStore = create<UIState>()(
       name: 'ui-storage',
       storage: createJSONStorage(() => idbStorage),
       partialize: (state) => ({
+        workspace: state.workspace,
         sidebarCollapsed: state.sidebarCollapsed,
         promptInstructions: state.promptInstructions,
         apiKey: state.apiKey,
@@ -140,6 +163,9 @@ export const useUIStore = create<UIState>()(
         confluenceToken: state.confluenceToken,
         confluenceSpaceKey: state.confluenceSpaceKey,
         confluenceParentPageId: state.confluenceParentPageId,
+        slackBotToken: state.slackBotToken,
+        slackChannel: state.slackChannel,
+        slackNotificationsEnabled: state.slackNotificationsEnabled,
       }),
     }
   )

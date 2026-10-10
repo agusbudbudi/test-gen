@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "concurrently \"npm run frontend\" \"npm run backend\"",
     "frontend": "vite",
-    "backend": "node server/index.js",
+    "backend": "node api/index.js",
     "build": "tsc && vite build",
     "preview": "vite preview"
   },
@@ -15,6 +15,7 @@
     "@vercel/blob": "^2.3.1",
     "axios": "^1.13.6",
     "clsx": "^2.1.1",
+    "cookie-parser": "^1.4.7",
     "dayjs": "^1.11.20",
     "dotenv": "^16.4.5",
     "express": "^4.21.1",

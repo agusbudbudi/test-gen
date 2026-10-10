@@ -9,30 +9,35 @@ import {
   ExternalLink,
   Zap,
   BookOpen,
+  Slack,
 } from "lucide-react";
-import { useUIStore } from "@/stores/uiStore";
+import { useUIStore, type Workspace } from "@/stores/uiStore";
 import { useToast } from "@/hooks/useToast";
+import ToggleSwitch from "@/components/ToggleSwitch/ToggleSwitch";
 
-type Tab = "general" | "jira" | "confluence";
+type Tab = "workspace" | "general" | "jira" | "confluence" | "slack";
 
 const SettingsPage = () => {
-  const [activeTab, setActiveTab] = useState<Tab>("general");
+  const [activeTab, setActiveTab] = useState<Tab>("workspace");
   const [apiKeyInput, setApiKeyInput] = useState("");
   const [showApiKey, setShowApiKey] = useState(false);
   const [showJiraToken, setShowJiraToken] = useState(false);
   const [showConfluenceToken, setShowConfluenceToken] = useState(false);
+  const [showSlackToken, setShowSlackToken] = useState(false);
   const toast = useToast();
 
   // Handle deep linking via tab parameter
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const tab = params.get('tab') as Tab;
-    if (tab && ['general', 'jira', 'confluence'].includes(tab)) {
+    if (tab && ['workspace', 'general', 'jira', 'confluence', 'slack'].includes(tab)) {
       setActiveTab(tab);
     }
   }, []);
 
   const {
+    workspace,
+    setWorkspace,
     apiKey,
     setApiKey,
     clearApiKey,
@@ -63,6 +68,12 @@ const SettingsPage = () => {
     setConfluenceSpaceKey,
     confluenceParentPageId,
     setConfluenceParentPageId,
+    slackBotToken,
+    setSlackBotToken,
+    slackChannel,
+    setSlackChannel,
+    slackNotificationsEnabled,
+    setSlackNotificationsEnabled,
   } = useUIStore();
 
   // ─── General handlers ───────────────────────────────────────────
@@ -136,8 +147,33 @@ const SettingsPage = () => {
     toast.info("Confluence settings cleared.");
   };
 
+  // ─── Slack handlers ────────────────────────────────────────────
+  const handleSaveSlack = () => {
+    if (!slackBotToken.trim() || !slackChannel.trim()) {
+      toast.warning("Please fill in the Bot Token and Channel.");
+      return;
+    }
+    toast.success("Slack settings saved!");
+  };
+
+  const handleClearSlack = () => {
+    setSlackBotToken("");
+    setSlackChannel("");
+    setSlackNotificationsEnabled(false);
+    toast.info("Slack settings cleared.");
+  };
+
+  const handleSelectWorkspace = (next: Workspace) => {
+    if (next === workspace) return;
+    setWorkspace(next);
+    toast.success(
+      `Switched to ${next === "fithub" ? "FitHub" : "Diri Care"} workspace.`,
+    );
+  };
+
   const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
-    { id: "general", label: "General", icon: <Key size={16} /> },
+    { id: "workspace", label: "Workspace", icon: <Layers size={16} /> },
+    { id: "general", label: "AI Provider", icon: <Key size={16} /> },
     {
       id: "jira",
       label: "Jira",
@@ -159,6 +195,11 @@ const SettingsPage = () => {
           className="w-4 h-4 object-contain"
         />
       ),
+    },
+    {
+      id: "slack",
+      label: "Slack",
+      icon: <Slack size={16} />,
     },
   ];
 
@@ -197,12 +238,74 @@ const SettingsPage = () => {
 
         {/* Tab Content */}
         <div className="flex-1 min-w-0">
+          {/* ── Workspace Tab ── */}
+          {activeTab === "workspace" && (
+            <div className="bg-white dark:bg-surface-card border border-slate-200 dark:border-border-brand rounded-2xl p-6 space-y-6 animate-slide-up">
+              <div>
+                <h2 className="text-base font-semibold text-slate-900 dark:text-white mb-0.5">
+                  Workspace
+                </h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Choose which workspace you're working in. This controls which menus appear in the sidebar.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <button
+                  onClick={() => handleSelectWorkspace("fithub")}
+                  className={`text-left p-4 rounded-xl border-2 transition-all ${
+                    workspace === "fithub"
+                      ? "border-primary bg-primary/5 dark:bg-primary/10"
+                      : "border-slate-200 dark:border-border-brand hover:border-slate-300 dark:hover:border-slate-600"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-semibold text-slate-900 dark:text-white">
+                      FitHub
+                    </span>
+                    {workspace === "fithub" && (
+                      <CheckCircle2 size={16} className="text-primary" />
+                    )}
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    Shows Create QA Tasks. AI Workshop, Release Visibility, History, and Coming Soon menus are hidden.
+                  </p>
+                </button>
+
+                <button
+                  onClick={() => handleSelectWorkspace("diricare")}
+                  className={`text-left p-4 rounded-xl border-2 transition-all ${
+                    workspace === "diricare"
+                      ? "border-primary bg-primary/5 dark:bg-primary/10"
+                      : "border-slate-200 dark:border-border-brand hover:border-slate-300 dark:hover:border-slate-600"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-semibold text-slate-900 dark:text-white">
+                      Diri Care
+                    </span>
+                    {workspace === "diricare" && (
+                      <CheckCircle2 size={16} className="text-primary" />
+                    )}
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    Shows AI Workshop, Release Visibility, History, and Coming Soon menus. Create QA Tasks is hidden.
+                  </p>
+                </button>
+              </div>
+
+              <p className="text-xs text-slate-400">
+                Settings, Important Links, and Documentation always stay visible regardless of workspace.
+              </p>
+            </div>
+          )}
+
           {/* ── General Tab ── */}
           {activeTab === "general" && (
             <div className="bg-white dark:bg-surface-card border border-slate-200 dark:border-border-brand rounded-2xl p-6 space-y-6 animate-slide-up">
               <div>
                 <h2 className="text-base font-semibold text-slate-900 dark:text-white mb-0.5">
-                  General
+                  AI Provider
                 </h2>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
                   AI configuration for generating tests and analyzing code.
@@ -665,6 +768,117 @@ const SettingsPage = () => {
                   confluenceParentPageId) && (
                   <button
                     onClick={handleClearConfluence}
+                    className="flex items-center gap-2 px-5 py-2.5 bg-slate-100 dark:bg-slate-700 hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-600 dark:text-slate-300 hover:text-red-600 dark:hover:text-red-400 font-medium rounded-xl transition-colors text-sm"
+                  >
+                    <Trash2 size={15} />
+                    Clear
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ── Slack Integration Tab ── */}
+          {activeTab === "slack" && (
+            <div className="bg-white dark:bg-surface-card border border-slate-200 dark:border-border-brand rounded-2xl p-6 space-y-6 animate-slide-up">
+              <div className="flex items-start justify-between">
+                <div>
+                  <h2 className="text-base font-semibold text-slate-900 dark:text-white mb-0.5">
+                    Slack Integration
+                  </h2>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Send a notification to Slack after Create QA Tasks finishes.
+                  </p>
+                </div>
+                <a
+                  href="https://api.slack.com/apps"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 text-xs text-primary hover:underline font-medium flex-shrink-0"
+                >
+                  <ExternalLink size={12} />
+                  Create a Slack App
+                </a>
+              </div>
+
+              {/* Enable toggle */}
+              <ToggleSwitch
+                checked={slackNotificationsEnabled}
+                onChange={setSlackNotificationsEnabled}
+                label="Enable Notifications"
+                description="When off, Create QA Tasks will never contact Slack."
+              />
+
+              {/* Bot Token */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                  Bot Token
+                </label>
+                <div className="relative">
+                  <input
+                    type={showSlackToken ? "text" : "password"}
+                    placeholder={
+                      slackBotToken ? "••••••••  (token saved)" : "xoxb-..."
+                    }
+                    className="w-full pl-4 pr-10 py-2.5 bg-slate-50 dark:bg-surface-dark border border-slate-200 dark:border-border-brand rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all text-sm dark:text-slate-200"
+                    value={slackBotToken}
+                    onChange={(e) => setSlackBotToken(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowSlackToken((v) => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                  >
+                    {showSlackToken ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+                {slackBotToken && (
+                  <p className="text-xs text-green-500 font-medium flex items-center gap-1 pt-0.5">
+                    <CheckCircle2 size={12} /> Bot Token is saved.
+                  </p>
+                )}
+                <p className="text-xs text-slate-400">
+                  Needs the <code>chat:write</code> scope, and the bot must be invited to the target channel.
+                </p>
+              </div>
+
+              {/* Channel */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                  Channel{" "}
+                  <span className="text-slate-400 font-normal">
+                    (e.g. #ai-notif)
+                  </span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="#ai-notif"
+                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-surface-dark border border-slate-200 dark:border-border-brand rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all text-sm dark:text-slate-200"
+                  value={slackChannel}
+                  onChange={(e) => setSlackChannel(e.target.value)}
+                />
+              </div>
+
+              {/* Connection status */}
+              {slackNotificationsEnabled && slackBotToken && slackChannel && (
+                <div className="flex items-center gap-2 px-4 py-3 bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800/30 rounded-xl">
+                  <Zap size={15} className="text-green-500 flex-shrink-0" />
+                  <p className="text-xs font-medium text-green-700 dark:text-green-400">
+                    Slack is configured and notifications are enabled.
+                  </p>
+                </div>
+              )}
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={handleSaveSlack}
+                  className="flex-1 py-2.5 bg-primary hover:bg-primary-hover text-white font-semibold rounded-xl transition-colors shadow-lg shadow-primary/20 text-sm"
+                >
+                  Save Slack Settings
+                </button>
+                {(slackBotToken || slackChannel) && (
+                  <button
+                    onClick={handleClearSlack}
                     className="flex items-center gap-2 px-5 py-2.5 bg-slate-100 dark:bg-slate-700 hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-600 dark:text-slate-300 hover:text-red-600 dark:hover:text-red-400 font-medium rounded-xl transition-colors text-sm"
                   >
                     <Trash2 size={15} />

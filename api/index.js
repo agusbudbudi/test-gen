@@ -1,13 +1,17 @@
 import 'dotenv/config';
+import crypto from 'node:crypto';
 import express from 'express';
+import cookieParser from 'cookie-parser';
 import path from 'path';
 import axios from 'axios';
 import { fileURLToPath } from 'url';
-import { DataStore } from './dashboard/dataStore.js';
-import { runsRouter } from './dashboard/routes/runs.js';
-import { metricsRouter } from './dashboard/routes/metrics.js';
-import { runDetailsRouter } from './dashboard/routes/runDetails.js';
-import { linksRouter } from './links/routes.js';
+import { DataStore } from '../backend/dashboard/dataStore.js';
+import { runsRouter } from '../backend/dashboard/routes/runs.js';
+import { metricsRouter } from '../backend/dashboard/routes/metrics.js';
+import { runDetailsRouter } from '../backend/dashboard/routes/runDetails.js';
+import { linksRouter } from '../backend/links/routes.js';
+import { qaTasksRouter } from '../backend/qaTasks/routes.js';
+import { authRouter, requireAuth } from '../backend/auth/routes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -15,6 +19,7 @@ const __dirname = path.dirname(__filename);
 const app = express();
 
 app.use(express.json({ limit: "50mb" })); // Increased limit for large Cypress test suites
+app.use(cookieParser());
 
 const dashboardStore = new DataStore();
 
@@ -23,8 +28,11 @@ app.get("/api/health", (_req, res) => {
   res.json({ ok: true });
 });
 
+// Auth: login/logout/me. Not gated by requireAuth (that would be circular).
+app.use('/api/auth', authRouter);
+
 // Proxy endpoint to OpenAI Chat Completions
-app.post("/api/chat", async (req, res) => {
+app.post("/api/chat", requireAuth, async (req, res) => {
   try {
     // Check for API key in header first (from client UI), then fallback to .env
     let apiKey = process.env.OPENAI_API_KEY;
@@ -244,7 +252,7 @@ app.post("/api/chat", async (req, res) => {
 });
 
 // Proxy endpoint to create a Jira issue
-app.post("/api/jira/issue", async (req, res) => {
+app.post("/api/jira/issue", requireAuth, async (req, res) => {
   try {
     const { 
       jiraUrl, email, token, projectKey, summary, description,
@@ -352,7 +360,7 @@ app.post("/api/jira/issue", async (req, res) => {
 });
 
 // Proxy endpoint to GET a Jira issue by key (used by the Jira URL import feature)
-app.get("/api/jira/issue/:key", async (req, res) => {
+app.get("/api/jira/issue/:key", requireAuth, async (req, res) => {
   try {
     const { key } = req.params;
     const { jiraUrl, email, token } = req.query;
@@ -388,7 +396,7 @@ app.get("/api/jira/issue/:key", async (req, res) => {
 });
 
 // Proxy endpoint to Search Jira users (to resolve email to accountId)
-app.get("/api/jira/user/search", async (req, res) => {
+app.get("/api/jira/user/search", requireAuth, async (req, res) => {
   try {
     const { query, jiraUrl, email, token } = req.query;
 
@@ -424,7 +432,7 @@ app.get("/api/jira/user/search", async (req, res) => {
 });
 
 // Proxy endpoint to Search Jira issues (used by Release Visibility feature)
-app.get("/api/jira/search", async (req, res) => {
+app.get("/api/jira/search", requireAuth, async (req, res) => {
   try {
     const { jql, jiraUrl, email, token } = req.query;
 
@@ -464,7 +472,7 @@ app.get("/api/jira/search", async (req, res) => {
 });
 
 // Proxy endpoint to create a Confluence page
-app.post("/api/confluence/page", async (req, res) => {
+app.post("/api/confluence/page", requireAuth, async (req, res) => {
   try {
     const { 
       confluenceUrl, email, token, spaceKey, title, content, parentPageId 
@@ -523,13 +531,32 @@ app.post("/api/confluence/page", async (req, res) => {
 });
 
 // Dashboard Routes
-app.use('/api/dashboard/runs', runsRouter(dashboardStore));
-app.use('/api/dashboard/metrics', metricsRouter(dashboardStore));
-app.use('/api/dashboard/run-details', runDetailsRouter(dashboardStore));
-app.use('/api/links', linksRouter);
+app.use('/api/dashboard/runs', requireAuth, runsRouter(dashboardStore));
+app.use('/api/dashboard/metrics', requireAuth, metricsRouter(dashboardStore));
+app.use('/api/dashboard/run-details', requireAuth, runDetailsRouter(dashboardStore));
+app.use('/api/links', requireAuth, linksRouter);
+app.use('/api/qa-tasks', requireAuth, qaTasksRouter);
 
-// Webhook for Cypress results
+// Webhook for Cypress results (called by CI, not the browser — no session cookie
+// to check, so this intentionally stays outside requireAuth). When
+// DASHBOARD_WEBHOOK_TOKEN is set, CI must send it as `Authorization: Bearer <token>`.
+const DASHBOARD_WEBHOOK_TOKEN = process.env.DASHBOARD_WEBHOOK_TOKEN;
+if (!DASHBOARD_WEBHOOK_TOKEN) {
+  console.warn('[dashboard] DASHBOARD_WEBHOOK_TOKEN is not set; /api/dashboard/webhook accepts unauthenticated posts.');
+}
+
+function hasValidWebhookToken(req) {
+  if (!DASHBOARD_WEBHOOK_TOKEN) return true;
+  const header = req.headers.authorization || '';
+  const provided = Buffer.from(header.replace(/^Bearer\s+/i, ''));
+  const expected = Buffer.from(DASHBOARD_WEBHOOK_TOKEN);
+  return provided.length === expected.length && crypto.timingSafeEqual(provided, expected);
+}
+
 app.post("/api/dashboard/webhook", async (req, res) => {
+  if (!hasValidWebhookToken(req)) {
+    return res.status(401).json({ error: "Invalid webhook token" });
+  }
   const result = req.body;
   if (!result || !result.runId) {
     return res.status(400).json({ error: "Invalid payload: missing runId" });
@@ -548,7 +575,7 @@ app.post("/api/dashboard/webhook", async (req, res) => {
 });
 // Serve Allure Results (Screenshots/Attachments)
 const ALLURE_RESULTS_DIR = process.env.ALLURE_RESULTS_DIR || "/Users/agudbudiman/Documents/automation-diricare/healthapp-web-automation/allure-results";
-app.use('/api/allure-results', express.static(ALLURE_RESULTS_DIR));
+app.use('/api/allure-results', requireAuth, express.static(ALLURE_RESULTS_DIR));
 
 const distDir = path.join(__dirname, "..", "dist");
 // Vercel handles static serving via rewrites in vercel.json, 

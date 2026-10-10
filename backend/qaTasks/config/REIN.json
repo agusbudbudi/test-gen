@@ -1,0 +1,8 @@
+{
+  "issueType": "Testing Task",
+  "label": "QA-Tool-Created",
+  "fieldDefaults": {
+    "customfield_10052": { "id": "REPLACE_WITH_QA_ASSIGNEE_ACCOUNT_ID" },
+    "customfield_10036": { "value": "REPLACE_WITH_DEPLOY_ENVIRONMENT_VALUE" }
+  }
+}
