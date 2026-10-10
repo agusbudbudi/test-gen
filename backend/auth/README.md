@@ -29,7 +29,7 @@ a swap of one file rather than a rewrite.
 ## Migrating to multi-user later
 
 1. Add a `users` collection (mongoose model, alongside the existing `Run`/
-   `Cache` models in `api/dashboard/models/`) with `{ username, passwordHash }`
+   `Cache` models in `backend/dashboard/models/`) with `{ username, passwordHash }`
    — hash with bcrypt, never store plaintext.
 2. Rewrite `verifyCredentials()` in `credentials.js` to look up that
    collection instead of comparing against `APP_PASSWORD`. Its signature

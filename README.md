@@ -71,7 +71,8 @@ A powerful AI-driven test case generator and management platform. Build, organiz
 
 ```
 test-gen/
-├── api/                  # Vercel Serverless Functions (Backend)
+├── api/index.js          # Vercel Serverless Function entry (Express app)
+├── backend/              # Backend modules (auth, dashboard, links, qaTasks)
 ├── src/
 │   ├── components/       # Shared UI components (Modals, Tables, Toast)
 │   ├── hooks/            # Custom React hooks (API, Jira, Export)
