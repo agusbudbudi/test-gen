@@ -1,4 +1,4 @@
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import { useUIStore } from "@/stores/uiStore";
 import { cn } from "@/lib/utils";
@@ -12,6 +12,7 @@ const Layout = () => {
       toggleMobileMenu: state.toggleMobileMenu,
     }),
   );
+  const isFullBleed = useLocation().pathname === "/";
 
   return (
     <div className="flex min-h-screen transition-colors duration-300">
@@ -40,15 +41,21 @@ const Layout = () => {
 
       <main
         className={cn(
-          "flex-1 min-w-0 transition-all duration-300 p-4 lg:p-6 pt-20 pb-10 lg:py-4",
+          "flex-1 min-w-0 transition-all duration-300 flex flex-col",
+          isFullBleed ? "pt-16 lg:pt-0" : "p-4 lg:p-6 pt-20 pb-10 lg:py-4",
           sidebarCollapsed ? "lg:ml-16" : "lg:ml-52",
           "ml-0", // Reset margin for mobile
         )}
       >
         <div
           className={cn(
-            "mx-auto w-full min-w-0 transition-all duration-300",
-            sidebarCollapsed ? "max-w-full" : "max-w-7xl",
+            "min-w-0 transition-all duration-300",
+            isFullBleed
+              ? "w-full flex-1"
+              : cn(
+                  "mx-auto w-full",
+                  sidebarCollapsed ? "max-w-full" : "max-w-7xl",
+                ),
           )}
         >
           <Outlet />

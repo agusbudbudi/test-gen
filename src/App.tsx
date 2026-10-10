@@ -7,14 +7,17 @@ import {
 import { Suspense, lazy, useEffect } from "react";
 import { useThemeStore } from "@/stores/themeStore";
 import { useUIStore } from "@/stores/uiStore";
+import { useAuthStore } from "@/stores/authStore";
 import Layout from "@/components/Layout/Layout";
 import ToastContainer from "@/components/Toast/ToastContainer";
 import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary";
 import PromptInstructionsModal from "@/components/Modal/PromptInstructionsModal";
 import HowToUseModal from "@/components/Modal/HowToUseModal";
 import TemplateSelectionModal from "@/components/Modal/TemplateSelectionModal";
+import LoginPage from "@/pages/Login/LoginPage";
 
 // Lazy load pages
+const WelcomePage = lazy(() => import("@/pages/Welcome/WelcomePage"));
 const GeneratePage = lazy(
   () => import("@/pages/GenerateTestCase/GeneratePage"),
 );
@@ -53,6 +56,10 @@ const ImportantLinksPage = lazy(
   () => import("@/pages/ImportantLinks/ImportantLinksPage"),
 );
 
+const QaTaskCreatorPage = lazy(
+  () => import("@/pages/QaTaskCreator/QaTaskCreatorPage"),
+);
+
 const App = () => {
   const {
     isPromptModalOpen,
@@ -67,6 +74,8 @@ const App = () => {
   } = useUIStore();
 
   const isDarkMode = useThemeStore((state) => state.isDarkMode);
+  const authStatus = useAuthStore((state) => state.status);
+  const checkAuth = useAuthStore((state) => state.checkAuth);
 
   useEffect(() => {
     if (isDarkMode) {
@@ -75,6 +84,27 @@ const App = () => {
       document.documentElement.classList.remove("dark");
     }
   }, [isDarkMode]);
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
+
+  if (authStatus === "loading") {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-surface dark:bg-surface-dark">
+        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  if (authStatus === "unauthenticated") {
+    return (
+      <>
+        <LoginPage />
+        <ToastContainer />
+      </>
+    );
+  }
 
   return (
     <ErrorBoundary>
@@ -88,7 +118,7 @@ const App = () => {
         >
           <Routes>
             <Route element={<Layout />}>
-              <Route path="/" element={<Navigate to="/generate" replace />} />
+              <Route path="/" element={<WelcomePage />} />
               <Route path="/generate" element={<GeneratePage />} />
               <Route path="/review" element={<ReviewPage />} />
               <Route path="/bug-report" element={<BugReportPage />} />
@@ -123,7 +153,8 @@ const App = () => {
                 element={<DocumentationPage />}
               />
               <Route path="/important-links" element={<ImportantLinksPage />} />
-              <Route path="*" element={<Navigate to="/generate" replace />} />
+              <Route path="/qa-tasks" element={<QaTaskCreatorPage />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
             </Route>
           </Routes>
         </Suspense>
