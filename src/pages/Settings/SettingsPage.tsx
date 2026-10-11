@@ -14,6 +14,7 @@ import {
 import { useUIStore, type Workspace } from "@/stores/uiStore";
 import { useToast } from "@/hooks/useToast";
 import ToggleSwitch from "@/components/ToggleSwitch/ToggleSwitch";
+import { AI_PROVIDERS, getActiveApiKey, requiresClientApiKey } from "@/lib/aiProvider";
 
 type Tab = "workspace" | "general" | "jira" | "confluence" | "slack";
 
@@ -78,7 +79,7 @@ const SettingsPage = () => {
 
   // ─── General handlers ───────────────────────────────────────────
   const handleSaveGeneral = () => {
-    if (apiKeyInput.trim()) {
+    if (requiresClientApiKey(aiProvider) && apiKeyInput.trim()) {
       if (aiProvider === "anthropic") {
         setAnthropicApiKey(apiKeyInput.trim());
       } else {
@@ -99,7 +100,7 @@ const SettingsPage = () => {
     toast.info("API Key cleared.");
   };
 
-  const activeApiKey = aiProvider === "anthropic" ? anthropicApiKey : apiKey;
+  const activeApiKey = getActiveApiKey(aiProvider, apiKey, anthropicApiKey);
 
   // ─── Jira handlers ─────────────────────────────────────────────
   const handleSaveJira = () => {
@@ -369,44 +370,85 @@ const SettingsPage = () => {
                       />
                     )}
                   </button>
+                  <button
+                    onClick={() => {
+                      setAiProvider(AI_PROVIDERS.CLAUDE_SUBSCRIPTION);
+                      setApiKeyInput("");
+                      if (!selectedModel.startsWith("claude")) {
+                        setSelectedModel("claude-sonnet-4-6");
+                      }
+                    }}
+                    className={`flex items-center gap-2 px-5 py-2.5 text-sm font-semibold border-b-2 transition-colors -mb-px ${
+                      aiProvider === AI_PROVIDERS.CLAUDE_SUBSCRIPTION
+                        ? "border-orange-500 text-orange-600 dark:text-orange-400"
+                        : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                    }`}
+                  >
+                    <img
+                      src="/assets/icons/claude-logo.png"
+                      className="w-4 h-4 object-contain"
+                      alt="Claude Pro"
+                    />
+                    Claude Pro
+                    {aiProvider === AI_PROVIDERS.CLAUDE_SUBSCRIPTION && (
+                      <CheckCircle2
+                        size={13}
+                        className="ml-1 text-orange-500"
+                      />
+                    )}
+                  </button>
                 </div>
               </div>
 
               {/* API Key */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                  {aiProvider === "anthropic"
-                    ? "Anthropic API Key"
-                    : "OpenAI API Key"}
-                </label>
-                <div className="relative">
-                  <Key
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                    size={16}
-                  />
-                  <input
-                    type={showApiKey ? "text" : "password"}
-                    placeholder={
-                      activeApiKey ? "••••••••  (key saved)" : "sk-..."
-                    }
-                    className="w-full pl-9 pr-10 py-2.5 bg-slate-50 dark:bg-surface-dark border border-slate-200 dark:border-border-brand rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all text-sm dark:text-slate-200"
-                    value={apiKeyInput}
-                    onChange={(e) => setApiKeyInput(e.target.value)}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowApiKey((v) => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
-                  >
-                    {showApiKey ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
+              {requiresClientApiKey(aiProvider) ? (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    {aiProvider === "anthropic"
+                      ? "Anthropic API Key"
+                      : "OpenAI API Key"}
+                  </label>
+                  <div className="relative">
+                    <Key
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                      size={16}
+                    />
+                    <input
+                      type={showApiKey ? "text" : "password"}
+                      placeholder={
+                        activeApiKey ? "••••••••  (key saved)" : "sk-..."
+                      }
+                      className="w-full pl-9 pr-10 py-2.5 bg-slate-50 dark:bg-surface-dark border border-slate-200 dark:border-border-brand rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all text-sm dark:text-slate-200"
+                      value={apiKeyInput}
+                      onChange={(e) => setApiKeyInput(e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowApiKey((v) => !v)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                    >
+                      {showApiKey ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                  {activeApiKey && !apiKeyInput && (
+                    <p className="text-xs text-green-500 font-medium flex items-center gap-1 pt-0.5">
+                      <CheckCircle2 size={12} /> API Key is saved.
+                    </p>
+                  )}
                 </div>
-                {activeApiKey && !apiKeyInput && (
-                  <p className="text-xs text-green-500 font-medium flex items-center gap-1 pt-0.5">
-                    <CheckCircle2 size={12} /> API Key is saved.
+              ) : (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    Claude Pro / Max Subscription
+                  </label>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-surface-dark border border-slate-200 dark:border-border-brand rounded-xl px-4 py-2.5">
+                    Uses your Claude Pro/Max subscription configured on the server
+                    (<code>CLAUDE_CODE_OAUTH_TOKEN</code>) — no key needed here.
+                    Only works when running the app locally. One-time setup:{" "}
+                    <code>claude login</code> then <code>claude setup-token</code>.
                   </p>
-                )}
-              </div>
+                </div>
+              )}
 
               {/* Model */}
               <div className="space-y-2">
@@ -418,7 +460,7 @@ const SettingsPage = () => {
                   onChange={(e) => setSelectedModel(e.target.value)}
                   className="w-full px-4 py-2.5 bg-slate-50 dark:bg-surface-dark border border-slate-200 dark:border-border-brand rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all text-sm dark:text-slate-200"
                 >
-                  {aiProvider === "anthropic" ? (
+                  {aiProvider === "anthropic" || aiProvider === AI_PROVIDERS.CLAUDE_SUBSCRIPTION ? (
                     <>
                       <option value="claude-opus-4-6">
                         Claude Opus 4.6 — Most Capable

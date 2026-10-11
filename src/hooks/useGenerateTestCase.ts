@@ -4,6 +4,7 @@ import { useHistoryStore } from '@/stores/historyStore'
 import { useToastStore } from '@/stores/toastStore'
 import { useResultStore } from '@/stores/resultStore'
 import { fetchChat } from '@/lib/api'
+import { getActiveApiKey, hasUsableApiKey } from '@/lib/aiProvider'
 
 export function useGenerateTestCase() {
   const [loading, setLoading] = useState(false)
@@ -35,8 +36,8 @@ export function useGenerateTestCase() {
     const count = options?.count ?? defaultTestCaseCount
     const model = options?.model ?? selectedModel
 
-    const activeApiKey = aiProvider === 'anthropic' ? anthropicApiKey : apiKey
-    if (!activeApiKey) {
+    const activeApiKey = getActiveApiKey(aiProvider, apiKey, anthropicApiKey)
+    if (!hasUsableApiKey(aiProvider, apiKey, anthropicApiKey)) {
       addToast('API Key is missing! Please set it in the sidebar.', 'warning')
       return
     }

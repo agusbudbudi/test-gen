@@ -4,6 +4,7 @@ import { useHistoryStore } from '@/stores/historyStore'
 import { useToastStore } from '@/stores/toastStore'
 import { useResultStore } from '@/stores/resultStore'
 import { fetchChatStream } from '@/lib/api'
+import { getActiveApiKey, hasUsableApiKey } from '@/lib/aiProvider'
 
 export interface ReviewTestRow {
   Status: 'New' | 'Improved'
@@ -105,8 +106,8 @@ export function useReviewTestCase() {
       return false
     }
 
-    const activeApiKey = aiProvider === 'anthropic' ? anthropicApiKey : apiKey
-    if (!activeApiKey) {
+    const activeApiKey = getActiveApiKey(aiProvider, apiKey, anthropicApiKey)
+    if (!hasUsableApiKey(aiProvider, apiKey, anthropicApiKey)) {
       // Don't toast here if we might be waiting for hydration, 
       // or at least return false so the caller knows it didn't start.
       return false
