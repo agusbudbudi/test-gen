@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useUIStore } from "@/stores/uiStore";
 import { useToastStore } from "@/stores/toastStore";
 import { fetchChat } from "@/lib/api";
+import { getActiveApiKey, hasUsableApiKey } from "@/lib/aiProvider";
 
 export interface Ticket {
   key: string;
@@ -19,7 +20,7 @@ export function useReleaseVisibility() {
   const { jiraUrl, jiraEmail, jiraToken, apiKey, anthropicApiKey, aiProvider, selectedModel } = useUIStore();
   const addToast = useToastStore((state) => state.addToast);
 
-  const activeApiKey = aiProvider === 'anthropic' ? anthropicApiKey : apiKey;
+  const activeApiKey = getActiveApiKey(aiProvider, apiKey, anthropicApiKey);
 
   const updateTicket = (key: string, updates: Partial<Ticket>) => {
     setTickets((prev) =>
@@ -28,7 +29,7 @@ export function useReleaseVisibility() {
   };
 
   const refreshTicketAI = async (ticket: Ticket) => {
-    if (!activeApiKey) {
+    if (!hasUsableApiKey(aiProvider, apiKey, anthropicApiKey)) {
       addToast("API Key is missing!", "warning");
       return;
     }
@@ -84,7 +85,7 @@ Return your response in JSON format: { "area": "...", "demoFlow": "..." }`,
       return;
     }
 
-    if (!activeApiKey) {
+    if (!hasUsableApiKey(aiProvider, apiKey, anthropicApiKey)) {
       addToast("API Key is missing! Please set it in the sidebar.", "warning");
       return;
     }

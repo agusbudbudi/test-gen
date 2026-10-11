@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
-import { Bug, Sparkles, Copy, Trash2, ChevronDown, Table2, AlignJustify, Upload, Check, ExternalLink, X, Image as ImageIcon, Plus, ClipboardList, Lightbulb, MessageSquarePlus, FileCheck, Info } from 'lucide-react'
-import { useBugReport } from '@/hooks/useBugReport'
+import { Bug, Sparkles, Copy, Trash2, ChevronDown, Table2, AlignJustify, Upload, Check, ExternalLink, X, Image as ImageIcon, Plus, ClipboardList, Lightbulb, MessageSquarePlus, FileCheck, Info, FileText, ScanSearch } from 'lucide-react'
+import { useBugReport, BugReportMode } from '@/hooks/useBugReport'
 import { useToast } from '@/hooks/useToast'
 import { useJiraExport } from '@/hooks/useJiraExport'
 import { useNavigate } from 'react-router-dom'
@@ -8,9 +8,15 @@ import ResultTable from '@/components/ResultTable/ResultTable'
 import LinkWorkItemModal from '@/components/Modal/LinkWorkItemModal'
 import { cn } from '@/lib/utils'
 
+const REPORT_MODES = [
+  { value: 'simple', label: 'Simple', icon: FileText, hint: 'Quick report: summary, description & severity' },
+  { value: 'detail', label: 'Detail', icon: ScanSearch, hint: 'Field-by-field report with root cause analysis' },
+] as const satisfies readonly { value: BugReportMode; label: string; icon: typeof FileText; hint: string }[]
+
 const BugReportPage = () => {
   const [bugDetails, setBugDetails] = useState('')
   const [uploadedImages, setUploadedImages] = useState<File[]>([])
+  const [reportMode, setReportMode] = useState<BugReportMode>('simple')
   const [isDragging, setIsDragging] = useState(false)
   const [showSmartCopyMenu, setShowSmartCopyMenu] = useState(false)
   const [exportedJiraData, setExportedJiraData] = useState<{ key: string; url: string } | null>(null)
@@ -37,7 +43,7 @@ const BugReportPage = () => {
 
   const handleGenerate = () => {
     setExportedJiraData(null) // Reset banner on new generate
-    generateReport(bugDetails, uploadedImages)
+    generateReport(bugDetails, uploadedImages, reportMode)
   }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -198,6 +204,28 @@ const BugReportPage = () => {
         <div className="bg-white dark:bg-surface-card border border-slate-200 dark:border-border-brand rounded-2xl overflow-hidden relative group">
           <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-primary/0 to-transparent pointer-events-none rounded-2xl" />
           
+          {/* Report Mode Tabs */}
+          <div className="relative z-10 flex gap-1 px-2 pt-1 border-b border-slate-200 dark:border-slate-800">
+            {REPORT_MODES.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                title={option.hint}
+                onClick={() => setReportMode(option.value)}
+                disabled={loading}
+                className={cn(
+                  'flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors -mb-px disabled:cursor-not-allowed',
+                  reportMode === option.value
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+                )}
+              >
+                <option.icon size={14} />
+                {option.label}
+              </button>
+            ))}
+          </div>
+
           <div className="relative z-10 p-5 space-y-6">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
@@ -205,7 +233,9 @@ const BugReportPage = () => {
               </div>
               <div>
                 <h2 className="text-sm font-bold text-slate-800 dark:text-slate-100 uppercase tracking-tight">Bug Details</h2>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">Describe the issue and attach evidence</p>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
+                  {REPORT_MODES.find((option) => option.value === reportMode)?.hint}
+                </p>
               </div>
             </div>
 
@@ -306,7 +336,7 @@ const BugReportPage = () => {
                 ) : (
                   <Sparkles size={18} className="group-hover:rotate-12 transition-transform" />
                 )}
-                {loading ? 'Analyzing Bug...' : 'Generate Bug Report'}
+                {loading ? 'Analyzing Bug...' : reportMode === 'detail' ? 'Generate Detailed Report' : 'Generate Bug Report'}
               </button>
             </div>
           </div>

@@ -6,11 +6,12 @@
   "scripts": {
     "dev": "concurrently \"npm run frontend\" \"npm run backend\"",
     "frontend": "vite",
-    "backend": "node server/index.js",
+    "backend": "node api/index.js",
     "build": "tsc && vite build",
     "preview": "vite preview"
   },
   "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.3.198",
     "@iconscout/react-unicons": "^2.2.5",
     "@vercel/blob": "^2.3.1",
     "axios": "^1.13.6",
