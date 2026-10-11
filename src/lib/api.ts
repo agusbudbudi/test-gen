@@ -98,17 +98,21 @@ export async function fetchChatStream(
         const jsonStr = line.replace(/^data: /, '').trim()
         if (!jsonStr) continue
 
+        let parsed: any
         try {
-          const parsed = JSON.parse(jsonStr)
-          const content = parsed.choices?.[0]?.delta?.content || ''
-          if (content) {
-            onChunk(content)
-          }
+          parsed = JSON.parse(jsonStr)
         } catch (e) {
           // If JSON is incomplete, it might have been split across a single newline
           // We'll put it back into the buffer for the next iteration
           buffer = line + '\n' + buffer
           break
+        }
+        if (parsed.error) {
+          throw new Error(typeof parsed.error === 'string' ? parsed.error : 'Stream failed')
+        }
+        const content = parsed.choices?.[0]?.delta?.content || ''
+        if (content) {
+          onChunk(content)
         }
       }
     }

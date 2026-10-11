@@ -12,6 +12,8 @@ export interface HistoryEntry {
     suggestions: string[]
     improvedVersion?: string
   }
+  // Table header row for 'bug_result' entries (rows are stored without it).
+  headers?: string[]
   createdAt: string
 }
 

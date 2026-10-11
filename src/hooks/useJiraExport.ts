@@ -101,8 +101,17 @@ export function useJiraExport() {
       ]
     }
 
-    const firstBugSummary = htmlToPlainText(rows[0][0]).substring(0, 200)
-    const summary = `${firstBugSummary}${rows.length > 1 ? ` (+${rows.length - 1} more)` : ''}`
+    // Detailed reports are a vertical Field | Detail table; the title lives in the "Title" row.
+    const isDetailReport = headers[0] === 'Field'
+    const titleRow = isDetailReport ? rows.find(row => row[0] === 'Title') : undefined
+    // Jira rejects multi-line summaries; collapse bullets/newlines into one line.
+    const firstBugSummary = htmlToPlainText(titleRow ? titleRow[1] : rows[0][0])
+      .split('\n')
+      .map(line => line.replace(/^\s*•\s*/, '').trim())
+      .filter(Boolean)
+      .join(' ')
+      .substring(0, 200)
+    const summary = `${firstBugSummary}${!isDetailReport && rows.length > 1 ? ` (+${rows.length - 1} more)` : ''}`
 
     // Handle Issue Linking
     let linkedIssueKey = null
