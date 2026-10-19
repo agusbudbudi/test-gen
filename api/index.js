@@ -45,11 +45,13 @@ app.post("/api/chat", requireAuth, async (req, res) => {
       }
     }
 
-    if (!apiKey) {
+    const payload = req.body || {};
+    const isClaudeSubscription = payload.provider === 'claude-subscription';
+
+    if (!apiKey && !isClaudeSubscription) {
       return res.status(500).json({ error: "Server missing OPENAI_API_KEY. Please set it in .env or via the UI." });
     }
 
-    const payload = req.body || {};
     if (!payload || !payload.model || !Array.isArray(payload.messages)) {
       return res
         .status(400)
@@ -60,6 +62,141 @@ app.post("/api/chat", requireAuth, async (req, res) => {
     const isAnthropic = payload.provider === 'anthropic';
     const cleanPayload = { ...payload };
     delete cleanPayload.provider;
+
+    if (isClaudeSubscription) {
+      // Uses the local Claude Pro/Max subscription instead of a metered API key.
+      // One-time setup: `claude login`, then `claude setup-token`, then set
+      // CLAUDE_CODE_OAUTH_TOKEN=<token> in .env. Only works on the machine running
+      // this backend (spawns a local `claude` subprocess) — not on Vercel prod.
+      // Lazy import: keeps the SDK and its native `claude` binary out of the
+      // cold-start path for every other /api route.
+      const { query: claudeSubscriptionQuery } = await import('@anthropic-ai/claude-agent-sdk');
+
+      const toText = (content) => {
+        if (typeof content === 'string') return content;
+        if (Array.isArray(content)) {
+          return content.filter((c) => c && c.type === 'text').map((c) => c.text).join('\n');
+        }
+        return '';
+      };
+
+      let systemPrompt = "";
+      const userBlocks = [];
+      for (const m of cleanPayload.messages) {
+        if (m.role === 'system') {
+          systemPrompt += toText(m.content) + "\n";
+        } else if (Array.isArray(m.content)) {
+          // Anthropic-format content parts (text + base64 images) pass through as-is.
+          const parts = m.content.filter((c) => c && (c.type === 'text' || c.type === 'image'));
+          if (m.role !== 'user') {
+            userBlocks.push({ type: 'text', text: `[${m.role}]\n${toText(parts)}` });
+          } else {
+            userBlocks.push(...parts);
+          }
+        } else {
+          const text = toText(m.content);
+          userBlocks.push({ type: 'text', text: m.role === 'user' ? text : `[${m.role}]\n${text}` });
+        }
+      }
+      const hasImages = userBlocks.some((b) => b.type === 'image');
+      const prompt = hasImages
+        ? (async function* () {
+            yield {
+              type: 'user',
+              message: { role: 'user', content: userBlocks },
+              parent_tool_use_id: null,
+              session_id: '',
+            };
+          })()
+        : userBlocks.map((b) => b.text).join('\n\n');
+
+      const setupHint = "Run `claude login` then `claude setup-token`, and set CLAUDE_CODE_OAUTH_TOKEN in .env.";
+      const abortController = new AbortController();
+      // Stop the `claude` subprocess if the client cancels or disconnects.
+      res.on('close', () => {
+        if (!res.writableFinished) abortController.abort();
+      });
+
+      try {
+        const stream = claudeSubscriptionQuery({
+          prompt,
+          options: {
+            model: cleanPayload.model,
+            // Replace Claude Code's default agent prompt with the app's own.
+            systemPrompt: systemPrompt.trim() || undefined,
+            // Don't load the user's ~/.claude settings (hooks, plugins, CLAUDE.md).
+            settingSources: [],
+            tools: [],
+            maxTurns: 1,
+            abortController,
+            // Required for `stream_event` messages in the streaming branch.
+            includePartialMessages: !!cleanPayload.stream,
+          },
+        });
+
+        const resultError = (message) => {
+          if (message.type !== 'result') return null;
+          if (message.subtype === 'success' && !message.is_error) return null;
+          const detail = message.result || (message.errors && message.errors.join('; ')) || message.subtype;
+          return `Claude subscription request failed (${message.subtype}): ${detail}`;
+        };
+
+        if (cleanPayload.stream) {
+          console.log('Starting Claude subscription stream for model:', cleanPayload.model);
+          res.setHeader('Content-Type', 'text/event-stream');
+          res.setHeader('Cache-Control', 'no-cache');
+          res.setHeader('Connection', 'keep-alive');
+          res.setHeader('X-Accel-Buffering', 'no');
+
+          for await (const message of stream) {
+            if (message.type === 'stream_event' && message.event?.type === 'content_block_delta') {
+              const text = message.event.delta?.text || '';
+              if (text) {
+                res.write(`data: ${JSON.stringify({ choices: [{ delta: { content: text } }] })}\n\n`);
+              }
+            } else {
+              const error = resultError(message);
+              if (error) {
+                console.error('Claude subscription error:', message);
+                res.write(`data: ${JSON.stringify({ error: `${error}. ${setupHint}` })}\n\n`);
+              }
+            }
+          }
+          res.write(`data: [DONE]\n\n`);
+          res.end();
+          return;
+        }
+
+        // Non-streaming
+        let fullText = '';
+        for await (const message of stream) {
+          if (message.type === 'assistant') {
+            const block = message.message?.content?.find((c) => c.type === 'text');
+            if (block) fullText += block.text;
+          } else {
+            const error = resultError(message);
+            if (error) {
+              console.error('Claude subscription error:', message);
+              return res.status(502).json({ error: `${error}. ${setupHint}` });
+            }
+          }
+        }
+        return res.status(200).json({
+          choices: [{ message: { content: fullText } }],
+        });
+      } catch (e) {
+        if (abortController.signal.aborted) return;
+        console.error('Claude subscription error:', e);
+        if (!res.headersSent) {
+          return res.status(500).json({
+            error: `Claude subscription request failed. ${setupHint}`,
+            details: String(e && e.message ? e.message : e),
+          });
+        }
+        res.write(`data: ${JSON.stringify({ error: String(e && e.message ? e.message : e) })}\n\n`);
+        return res.end();
+      }
+    }
 
     if (isAnthropic) {
       const anthropicMessages = [];

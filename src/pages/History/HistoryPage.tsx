@@ -126,7 +126,9 @@ const ChatBubble = ({ entry, index, onDelete }: any) => {
               <div className="overflow-x-auto w-full transition-all duration-300">
                 <ResultTable 
                   headers={entry.type === 'bug_result' 
-                    ? ['Summary', 'Description', 'Severity & Retest Result']
+                    ? entry.headers ?? (Array.isArray(entry.content) && entry.content[0]?.length === 2
+                        ? ['Field', 'Detail']
+                        : ['Summary', 'Description', 'Severity & Retest Result'])
                     : ['No', 'Section', 'Case Type', 'Title', 'Precondition', 'Step', 'Expected Result']
                   }
                   minWidth="0"
