@@ -1,6 +1,7 @@
-// Builds the 6 standard QA ticket titles and their Jira create-issue fields.
+// Builds the 7 standard QA ticket titles and their Jira create-issue fields.
 // Titles must use the parent's summary verbatim (no paraphrasing).
-// Ported from qa-tools/src/ticketBuilder.js, plus the Sandbox Test Execution ticket.
+// Ported from qa-tools/src/ticketBuilder.js, plus the Sandbox Test Execution and
+// Automation Script Development tickets.
 
 export const TICKET_DEFS = [
   { key: "create-test-case", prefix: "QA - Create Test Case" },
@@ -9,6 +10,7 @@ export const TICKET_DEFS = [
   { key: "pre-release-test-execution", prefix: "QA - Pre-Release Test Execution" },
   { key: "production-test-execution", prefix: "QA - Production Test Execution" },
   { key: "uat", prefix: "QA - UAT" },
+  { key: "automation-script-development", prefix: "QA - Automation Script Development" },
 ];
 
 export function buildTargetTitles(parentTitle) {

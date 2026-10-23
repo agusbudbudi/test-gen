@@ -111,8 +111,8 @@ const QaTaskCreatorPage = () => {
           Create QA Tasks
         </h1>
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-          Create the 6 standard QA tickets (Create Test Case, Sandbox/Staging/Pre-Release/Production
-          Test Execution, UAT) as children of a parent Jira ticket.
+          Create the 7 standard QA tickets (Create Test Case, Sandbox/Staging/Pre-Release/Production
+          Test Execution, UAT, Automation Script Development) as children of a parent Jira ticket.
         </p>
       </div>
 
