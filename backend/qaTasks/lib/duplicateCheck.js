@@ -1,9 +1,13 @@
-// Finds which of the 5 target titles already exist as children of the parent,
+// Finds which of the target titles already exist as children of the parent,
 // so the create step can skip them and stay idempotent.
-// Ported from qa-tools/src/duplicateCheck.js — unchanged.
+// Ported from qa-tools/src/duplicateCheck.js.
 
 export async function findExistingTitles(jiraClient, parentKey) {
-  const jql = `parent = "${parentKey}" AND summary ~ "QA -"`;
+  // Fetches every child and leaves matching to matchExisting's exact title
+  // compare. A `summary ~ "QA -"` filter here silently matched nothing (Jira
+  // text search doesn't treat the "-" literally), which let re-runs create
+  // duplicates.
+  const jql = `parent = "${parentKey}"`;
   const result = await jiraClient.searchIssues(jql, ["summary"]);
   const issues = result?.issues || [];
   return issues.map((issue) => ({
